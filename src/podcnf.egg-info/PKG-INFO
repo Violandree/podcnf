@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: podcnf
+Version: 1.1
+Summary: Python implementation of pod-cnf
+Author-email: Andrea Violante <violanteandrea15@gmail.com>
+Requires-Python: >=3.10
+Requires-Dist: numpy
+Requires-Dist: torch
+Requires-Dist: matplotlib
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: black; extra == "dev"

@@ -1,0 +1,23 @@
+# Python Virtual Environment
+.venv/
+
+# Datasets
+data/
+
+# Model Checkpoints and Outputs
+results/
+checkpoints/
+*.pt
+*.pth
+
+# Training Logs
+tensorboard_logs/
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE Settings e Sicurezza
+.vscode/
+.env

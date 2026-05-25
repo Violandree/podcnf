@@ -1,0 +1,33 @@
+# [build-system]
+# Dice a programmi come pip o uv quali strumenti usare per trasformare il codice sorgente in un pacchetto installabile.
+
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel"
+]
+build_backend = "setuptools.build_meta"
+
+[project]
+name = "podcnf"
+version = "1.1"
+authors = [
+    {name = "Andrea Violante", email = "violanteandrea15@gmail.com"}
+]
+description = "Python implementation of pod-cnf"
+requires-python = ">=3.10"
+
+# Contiene nome, versione, descrizione e gli autori. La parte vitale qui è dependencies: 
+# qui si elencano i pacchetti.
+
+dependencies = [
+    "numpy",
+    "torch",
+    "matplotlib"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
