@@ -1,7 +1,10 @@
 pyproject.toml
+src/podcnf/Loader.py
+src/podcnf/NFmodel.py
 src/podcnf/__init__.py
 src/podcnf.egg-info/PKG-INFO
 src/podcnf.egg-info/SOURCES.txt
 src/podcnf.egg-info/dependency_links.txt
 src/podcnf.egg-info/requires.txt
 src/podcnf.egg-info/top_level.txt
+tests/test_model.py

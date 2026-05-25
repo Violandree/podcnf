@@ -1,6 +1,7 @@
 numpy
 torch
 matplotlib
+scikit-learn
 
 [dev]
 pytest

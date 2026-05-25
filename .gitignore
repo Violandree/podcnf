@@ -21,3 +21,7 @@ __pycache__/
 # IDE Settings e Sicurezza
 .vscode/
 .env
+
+# egg-info
+*.egg-info/
+*.egg
