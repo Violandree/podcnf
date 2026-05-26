@@ -9,6 +9,9 @@ seaborn
 tqdm
 jupyter
 ipykernel
+pandas
+gdown
+pot
 
 [dev]
 pytest

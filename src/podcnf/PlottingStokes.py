@@ -9,10 +9,20 @@ from scipy.stats import pearsonr
 from scipy.linalg import svd
 from tqdm import tqdm
 
-import dolfin as fe
+try:
+    import dolfin as fe
+    DOLFIN_AVAILALBE = True
+except ImportError:
+    fe = None
+    DOLFIN_AVAILALBE = False
+    print("DOLFIN not available.")
+
 from podcnf.NFmodel import NormalizingFlow
 
 def plot_stokes_solution(indices, data, Vh):
+    if not DOLFIN_AVAILALBE:
+        print("DOLFIN not available. Skipping plot.")
+        return
 
     n_plots = len(indices)
     cols = math.ceil(math.sqrt(n_plots))
@@ -206,6 +216,9 @@ def plot_conditional_same_mu_stokes(n_generations,
                                     u_true, u_rec,
                                     Vh,
                                     mu_values=None):
+    if not DOLFIN_AVAILALBE:
+        print("DOLFIN not available. Skipping plot.")
+        return
 
     plt.figure(figsize=(9, 6))
 

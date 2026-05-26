@@ -15,6 +15,9 @@ Requires-Dist: seaborn
 Requires-Dist: tqdm
 Requires-Dist: jupyter
 Requires-Dist: ipykernel
+Requires-Dist: pandas
+Requires-Dist: gdown
+Requires-Dist: pot
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: black; extra == "dev"
