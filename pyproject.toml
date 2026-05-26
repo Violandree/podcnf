@@ -24,7 +24,12 @@ dependencies = [
     "numpy",
     "torch",
     "matplotlib",
-    "scikit-learn"
+    "scikit-learn",
+    "tensorboard",
+    "torchsummary",
+    "scipy",
+    "seaborn",
+    "tqdm"
 ]
 
 [project.optional-dependencies]

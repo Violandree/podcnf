@@ -1,6 +1,8 @@
 pyproject.toml
 src/podcnf/Loader.py
 src/podcnf/NFmodel.py
+src/podcnf/PlottingStokes.py
+src/podcnf/Training.py
 src/podcnf/__init__.py
 src/podcnf.egg-info/PKG-INFO
 src/podcnf.egg-info/SOURCES.txt

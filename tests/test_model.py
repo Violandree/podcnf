@@ -3,6 +3,10 @@ import numpy as np
 from podcnf.NFmodel import NormalizingFlow
 from podcnf.Loader import LoadData
 
+from podcnf.Training import full_train
+from podcnf.NFmodel import NormalizingFlow
+from podcnf.Loader import LoadData
+
 def test_flow_shapes():
     """
     Test to verify if the mdodel executes the forward step and the sampling
@@ -54,3 +58,40 @@ def test_load_data_pipeline():
     assert first_batch.shape == (batch_size, dim_mu + dim_c), f"Wrong shape: {first_batch.shape}"
     assert mu_scale is not None
     assert c_scale is not None
+
+def test_full_training_loop():
+    
+    total_samples = 40
+    dim_x = 2
+    dim_y = 4
+    batch_size = 10
+    epochs = 2  
+    
+    sample_mu = np.random.randn(total_samples, dim_x)
+    sample_c = np.random.randn(total_samples, dim_y)
+    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    train_l, val_l, _, _, _ = LoadData(
+        sample_mu, sample_c, n_train=20, n_val=35, BATCH_SIZE=batch_size, norm_scaler=True
+    )
+    
+    model = NormalizingFlow(dim_x=dim_x, dim_y=dim_y, num_flows=2, device=device)
+    
+    # Loop without writer (writer = None)
+    train_losses, val_losses = full_train(
+        epochs=epochs,
+        print_frequency=1,
+        model=model,
+        train_loader=train_l,
+        val_loader=val_l,
+        lr=1e-3,
+        weight_decay=1e-4,
+        patience=5,
+        device=device,
+        writer=None,
+        model_save_path=None
+    )
+    
+    assert len(train_losses) == epochs, f"Attese {epochs} metriche registrate, ottenute {len(train_losses)}"
+    assert train_losses[0] != float('inf')
