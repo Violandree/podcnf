@@ -29,7 +29,9 @@ dependencies = [
     "torchsummary",
     "scipy",
     "seaborn",
-    "tqdm"
+    "tqdm",
+    "jupyter",
+    "ipykernel"
 ]
 
 [project.optional-dependencies]

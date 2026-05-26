@@ -13,6 +13,8 @@ Requires-Dist: torchsummary
 Requires-Dist: scipy
 Requires-Dist: seaborn
 Requires-Dist: tqdm
+Requires-Dist: jupyter
+Requires-Dist: ipykernel
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: black; extra == "dev"
