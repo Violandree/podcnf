@@ -8,8 +8,6 @@ Requires-Dist: numpy
 Requires-Dist: torch
 Requires-Dist: matplotlib
 Requires-Dist: scikit-learn
-Requires-Dist: tensorboard
-Requires-Dist: torchsummary
 Requires-Dist: scipy
 Requires-Dist: seaborn
 Requires-Dist: tqdm
@@ -18,6 +16,7 @@ Requires-Dist: ipykernel
 Requires-Dist: pandas
 Requires-Dist: gdown
 Requires-Dist: pot
+Requires-Dist: dlroms-nicola-r-franco @ git+https://github.com/NicolaRFranco/dlroms.git
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: black; extra == "dev"

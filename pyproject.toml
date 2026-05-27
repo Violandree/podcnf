@@ -25,8 +25,6 @@ dependencies = [
     "torch",
     "matplotlib",
     "scikit-learn",
-    "tensorboard",
-    "torchsummary",
     "scipy",
     "seaborn",
     "tqdm",
@@ -34,7 +32,8 @@ dependencies = [
     "ipykernel",
     "pandas",
     "gdown",
-    "pot"
+    "pot",
+    "dlroms-nicola-r-franco @ git+https://github.com/NicolaRFranco/dlroms.git"
 ]
 
 [project.optional-dependencies]

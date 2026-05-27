@@ -2,8 +2,6 @@ numpy
 torch
 matplotlib
 scikit-learn
-tensorboard
-torchsummary
 scipy
 seaborn
 tqdm
@@ -12,6 +10,7 @@ ipykernel
 pandas
 gdown
 pot
+dlroms-nicola-r-franco @ git+https://github.com/NicolaRFranco/dlroms.git
 
 [dev]
 pytest
