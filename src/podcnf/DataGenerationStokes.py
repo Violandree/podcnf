@@ -3,12 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from dlroms import *
+from dlroms import fe
 
 try:
-    import dolfin as fe
+    import dolfin
     DOLFIN_AVAILALBE = True
 except ImportError:
-    fe = None
     DOLFIN_AVAILALBE = False
     print("DOLFIN not available.")
 
