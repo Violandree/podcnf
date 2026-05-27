@@ -1,7 +1,9 @@
+import os
 import torch
 import numpy as np
 from podcnf.NFmodel import NormalizingFlow
 from podcnf.Loader import LoadData
+import tempfile
 
 from podcnf.Training import full_train
 from podcnf.NFmodel import NormalizingFlow
@@ -78,20 +80,27 @@ def test_full_training_loop():
     
     model = NormalizingFlow(dim_x=dim_x, dim_y=dim_y, num_flows=2, device=device)
     
-    # Loop without writer (writer = None)
-    train_losses, val_losses = full_train(
-        epochs=epochs,
-        print_frequency=1,
-        model=model,
-        train_loader=train_l,
-        val_loader=val_l,
-        lr=1e-3,
-        weight_decay=1e-4,
-        patience=5,
-        device=device,
-        writer=None,
-        model_save_path=None
-    )
-    
-    assert len(train_losses) == epochs, f"Attese {epochs} metriche registrate, ottenute {len(train_losses)}"
-    assert train_losses[0] != float('inf')
+    with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as tmp_file:
+        temp_model_path = tmp_file.name
+        
+    try:
+        train_losses, val_losses = full_train(
+            epochs=epochs,
+            print_frequency=1,
+            model=model,
+            train_loader=train_l,
+            val_loader=val_l,
+            lr=1e-3,
+            weight_decay=1e-4,
+            patience=5,
+            device=device,
+            model_save_path=temp_model_path
+        )
+        
+        assert len(train_losses) == epochs, f"Attese {epochs} metriche registrate, ottenute {len(train_losses)}"
+        assert train_losses[0] != float('inf'), "La training loss è andata a infinito al primo step"
+        assert os.path.exists(temp_model_path), "Il modello non è stato salvato correttamente"
+
+    finally:
+        if os.path.exists(temp_model_path):
+            os.remove(temp_model_path)

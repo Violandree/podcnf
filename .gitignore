@@ -4,6 +4,9 @@
 # Datasets
 data/
 
+# Results
+results/
+
 # Model Checkpoints and Outputs
 results/
 checkpoints/

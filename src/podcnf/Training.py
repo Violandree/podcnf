@@ -5,9 +5,11 @@ from typing import List, Dict, Any, Tuple, Optional
 
 import numpy as np
 import torch
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from podcnf.NFmodel import NormalizingFlow
+
+import matplotlib.pyplot as plt
+from IPython.display import clear_output
 
 def train_one_epoch(model, train_loader, optimizer, device):
     """
@@ -99,38 +101,10 @@ def validate_one_epoch(model, val_loader, device):
 
     return avg_val_loss
 
-def log_metrics_to_tensorboard(writer, epoch, train_loss, val_loss, model):
-    """
-    Log training metrics and model parameters to TensorBoard for visualization.
-
-    Args:
-        writer (SummaryWriter): TensorBoard SummaryWriter object for logging
-        epoch (int): Current epoch number (used as x-axis in TensorBoard plots)
-        train_loss (float): Training loss for this epoch
-        val_loss (float): Validation loss for this epoch
-        model (nn.Module): The neural network model (for logging weights/gradients)
-
-    Note:
-        This function logs scalar metrics (loss) and histograms of model
-        parameters and gradients, which helps monitor training progress and detect
-        issues like vanishing/exploding gradients.
-    """
-    # Log scalar metrics
-    writer.add_scalar('Loss/Training', train_loss, epoch)
-    writer.add_scalar('Loss/Validation', val_loss, epoch)
-
-    # DA VEDERE SE UTILI
-    # Log model parameters and gradients
-    for name, param in model.named_parameters():
-        if param.requires_grad:
-            writer.add_histogram(f'{name}/weights', param.data, epoch)
-            if param.grad is not None:
-                writer.add_histogram(f'{name}/gradients', param.grad.data, epoch)
-
 def full_train(epochs, print_frequency,
                model, train_loader, val_loader,
                lr, weight_decay, patience,
-               device, writer, model_save_path):
+               device, model_save_path):
 
     print(f"Training {epochs} epochs (with patience={patience}, lr={lr}, wd={weight_decay}):")
 
@@ -142,6 +116,9 @@ def full_train(epochs, print_frequency,
     # Initialization early stopping
     best_val_loss = float('inf')
     epochs_no_improve = 0 # to check the patience
+
+    train_losses = []
+    val_losses = []
 
     # Main training loop: iterate through epochs
     for epoch in range(1, epochs + 1):
@@ -158,16 +135,24 @@ def full_train(epochs, print_frequency,
 
         scheduler.step(val_loss)
 
-        # Write metrics to TensorBoard for visualisation
-        log_metrics_to_tensorboard(
-            writer, epoch, train_loss, val_loss, model
-            )
+        train_losses.append(train_loss)
+        val_losses.append(val_loss)
 
         # Print progress every N epochs or on first epoch
         if epoch % print_frequency == 0 or epoch == 1:
             print(f"Epoch {epoch:3d}/{epochs} | "
                   f"Train: Loss={train_loss:.4f} | "
                   f"Val: Loss={val_loss:.4f}")
+
+            plt.figure(figsize=(10, 5))
+            plt.plot(range(1, epoch + 1), train_losses, label='Train Loss', color='blue')
+            plt.plot(range(1, epoch + 1), val_losses, label='Val Loss', color='orange')
+            plt.xlabel('Epochs')
+            plt.ylabel('Loss')
+            plt.title('Training and Validation Loss Progress')
+            plt.legend()
+            plt.grid(True, linestyle='--', alpha=0.7)
+            plt.show()
 
         # Early Stopping
         if val_loss < best_val_loss:
@@ -190,16 +175,15 @@ def full_train(epochs, print_frequency,
             break
 
     # Save trained model state dict and close TensorBoard writer
-    writer.close()
     print(f"\nTraining completed. Best model saved to: '{model_save_path}'")
     print(f"Best Validation Loss achieved: {best_val_loss:.4f}")
 
-def tuning_parameters(
-                    train_loader, val_loader,
-                    lr, num_flows, hidden_size, hidden_depth, weight_decay,
-                    epochs,
-                    dim_x, dim_y, device,
-                    base_logs_dir):
+    return train_losses, val_losses
+
+def tuning_parameters(train_loader, val_loader, 
+                      lr, num_flows, hidden_size, hidden_depth, weight_decay,
+                      epochs,
+                      dim_x, dim_y, device):
     """
     Input:
         - lr, num_flows, hidden_size: lists of possible value for the hyperparameters
@@ -240,9 +224,6 @@ def tuning_parameters(
                                      weight_decay=w_d)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10) # DA VEDERE
 
-        # Writer to save the log of this specific run
-        writer = SummaryWriter(os.path.join(base_logs_dir, run_name))
-
         current_run_best_val_loss = float('inf')
         final_epoch_val_loss = float('inf') # Just for the final output
 
@@ -251,8 +232,6 @@ def tuning_parameters(
             train_loss = train_one_epoch(
                 flow, train_loader, optimizer, device
                 )
-
-            writer.add_scalar('Loss/Training', train_loss, epoch)
 
             # Interrupt the RUN if the training explode
             if train_loss == float('inf'):
@@ -271,10 +250,7 @@ def tuning_parameters(
                 break
 
             final_epoch_val_loss = val_loss
-
             scheduler.step(val_loss) # DA VEDERE
-
-            writer.add_scalar('Loss/Validation', val_loss, epoch)
 
             # Check if this is the best val:loss
             if val_loss < current_run_best_val_loss:
@@ -287,8 +263,6 @@ def tuning_parameters(
         if current_run_best_val_loss < best_val_loss:
             best_val_loss = current_run_best_val_loss
             best_hyperparams = params
-
-        writer.close()
 
     print(f"\n--- Tuning Finished ---")
     print(f"Best Global Validation Loss: {best_val_loss:.4f}")
