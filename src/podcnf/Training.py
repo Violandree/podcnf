@@ -104,7 +104,8 @@ def validate_one_epoch(model, val_loader, device):
 def full_train(epochs, print_frequency,
                model, train_loader, val_loader,
                lr, weight_decay, patience,
-               device, model_save_path):
+               device, model_save_path,
+               show_plot = False):
 
     print(f"Training {epochs} epochs (with patience={patience}, lr={lr}, wd={weight_decay}):")
 
@@ -152,7 +153,12 @@ def full_train(epochs, print_frequency,
             plt.title('Training and Validation Loss Progress')
             plt.legend()
             plt.grid(True, linestyle='--', alpha=0.7)
-            plt.show()
+
+            if show_plot:
+                clear_output(wait=True)
+                plt.show()
+            else:
+                plt.close()
 
         # Early Stopping
         if val_loss < best_val_loss:

@@ -2,18 +2,24 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-from dlroms import *
-from dlroms import fe
-
 try:
     import dolfin
-    DOLFIN_AVAILALBE = True
+    from dlroms import *
+    from dlroms import fe
+    FENICS_AVAILALBE = True
 except ImportError:
-    DOLFIN_AVAILALBE = False
-    print("DOLFIN not available.")
+    FENICS_AVAILALBE = False
 
+def check_fenics():
+    if not FENICS_AVAILALBE:
+        raise RuntimeError(
+            "Fenics is not install in this environment."
+            "DataGenerationsStokes.py requires fenics"
+            "Try to execute the notebook on Google Colab."
+        )
 
 def stokes(mesh, inflows, outflows, source=[0.0, 0.0]):
+    check_fenics()
     from fenics import FiniteElement, NodalEnrichedElement, FunctionSpace, VectorElement, TrialFunctions, TestFunctions
     from fenics import inner, grad, dx, div, assemble, DirichletBC, Constant, Expression
     from scipy.sparse.linalg import spsolve
@@ -77,35 +83,37 @@ def stokes(mesh, inflows, outflows, source=[0.0, 0.0]):
     b = b[indexes].reshape(-1)
     return b
 
-domain = fe.rectangle((0, 0), (3, 2)) - fe.circle((0.95, 0.7), 0.25) - fe.circle((1.5, 1.35), 0.25) - fe.circle((2.05, 0.7), 0.25)
-mesh = fe.mesh(domain, stepsize=0.05)
+if FENICS_AVAILALBE:
+    domain = fe.rectangle((0, 0), (3, 2)) - fe.circle((0.95, 0.7), 0.25) - fe.circle((1.5, 1.35), 0.25) - fe.circle((2.05, 0.7), 0.25)
+    mesh = fe.mesh(domain, stepsize=0.05)
 
-left = lambda x: x[0] < 1e-6
-right = lambda x: 3 - x[0] < 1e-12
-circle = lambda x0, r: (lambda x: ((x[0]-x0[0])**2 + (x[1]-x0[1])**2)**0.5 < r + 1e-3)
+    left = lambda x: x[0] < 1e-6
+    right = lambda x: 3 - x[0] < 1e-12
+    circle = lambda x0, r: (lambda x: ((x[0]-x0[0])**2 + (x[1]-x0[1])**2)**0.5 < r + 1e-3)
 
-def inflows(b0x, b0y, b1, b2, b3):
-    return [
-        [left, lambda x: [b0x*np.exp(-25*(x[1]-1)**2), b0y*np.exp(-25*(x[1]-1)**2)]],
-        [circle((0.95, 0.70), 0.25), lambda x: [b1*(-x[1]+0.70), b1*(x[0]-0.95)]],
-        [circle((1.50, 1.35), 0.25), lambda x: [b2*(-x[1]+1.35), b2*(x[0]-1.50)]],
-        [circle((2.05, 0.70), 0.25), lambda x: [b3*(-x[1]+0.70), b3*(x[0]-2.05)]]
-    ]
+    def inflows(b0x, b0y, b1, b2, b3):
+        return [
+            [left, lambda x: [b0x*np.exp(-25*(x[1]-1)**2), b0y*np.exp(-25*(x[1]-1)**2)]],
+            [circle((0.95, 0.70), 0.25), lambda x: [b1*(-x[1]+0.70), b1*(x[0]-0.95)]],
+            [circle((1.50, 1.35), 0.25), lambda x: [b2*(-x[1]+1.35), b2*(x[0]-1.50)]],
+            [circle((2.05, 0.70), 0.25), lambda x: [b3*(-x[1]+0.70), b3*(x[0]-2.05)]]
+        ]
 
-outflows = [right]
+    outflows = [right]
 
-def bi(i):
-    e = np.zeros(5)
-    e[i] = 1
-    return stokes(mesh, inflows(*e), outflows)
+    def bi(i):
+        e = np.zeros(5)
+        e[i] = 1
+        return stokes(mesh, inflows(*e), outflows)
 
-# Calcolo immediato all'importazione
-b0x, b0y, b1, b2, b3 = [bi(i) for i in range(5)]
-Vh = fe.space(mesh, 'CG', 1)
-Vb = fe.space(mesh, 'CG', 1, vector_valued=True)
-clc()
+    # Calcolo immediato all'importazione
+    b0x, b0y, b1, b2, b3 = [bi(i) for i in range(5)]
+    Vh = fe.space(mesh, 'CG', 1)
+    Vb = fe.space(mesh, 'CG', 1, vector_valued=True)
+    clc()
 
 def ADR(eps, theta, c1, c2, c3):
+    check_fenics()
     from fenics import grad, inner, dx, solve, TrialFunction, TestFunction, Function, Constant, DirichletBC, assemble
     b = fe.asfunction(b0x*np.cos(theta) + b0y*np.sin(theta) + c1*b1 + c2*b2 + c3*b3, Vb)
     u, v = TrialFunction(Vh), TestFunction(Vh)
@@ -116,36 +124,3 @@ def ADR(eps, theta, c1, c2, c3):
     solve(L == f, u, bc)
     clc()
     return u.vector()[:]
-
-if __name__ == "__main__":
-    import torch
-    from joblib import Parallel, delayed
-    from tqdm import tqdm
-
-    N_SAMPLES = 6400
-    
-    eps_vals = np.random.uniform(0.01, 0.1, N_SAMPLES)
-    theta_vals = np.random.uniform(0, 2*np.pi, N_SAMPLES)
-    c1_vals = np.random.uniform(-1, 1, N_SAMPLES)
-    c2_vals = np.random.uniform(-1, 1, N_SAMPLES)
-    c3_vals = np.random.uniform(-1, 1, N_SAMPLES)
-
-    def compute_sample(i):
-        return ADR(eps_vals[i], theta_vals[i], c1_vals[i], c2_vals[i], c3_vals[i])
-
-    u_results = Parallel(n_jobs=2)(delayed(compute_sample)(i) for i in tqdm(range(N_SAMPLES)))
-
-    u_array = np.array(u_results, dtype=np.float32)
-
-    eps_t = torch.tensor(eps_vals, dtype=torch.float32).unsqueeze(1)
-    theta_t = torch.tensor(theta_vals, dtype=torch.float32).unsqueeze(1)
-    c1_t = torch.tensor(c1_vals, dtype=torch.float32).unsqueeze(1)
-    c2_t = torch.tensor(c2_vals, dtype=torch.float32).unsqueeze(1)
-    c3_t = torch.tensor(c3_vals, dtype=torch.float32).unsqueeze(1)
-
-    mu_array = torch.cat((eps_t, theta_t, c1_t, c2_t, c3_t), dim=1).numpy()
-
-    # os.makedirs('data/raw', exist_ok=True)
-    
-    # np.save('data/raw/u_data.npy', u_array)
-    # np.save('data/raw/mu_data.npy', mu_array)

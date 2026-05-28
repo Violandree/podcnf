@@ -12,7 +12,7 @@ def main():
     n_samples = 2
     n_jobs = 2
 
-    save_dir = 'data'
+    save_dir = '../data'
     os.makedirs(save_dir, exist_ok=True)
 
     eps_vals = np.random.uniform(0.01, 0.1, n_samples)
@@ -27,19 +27,25 @@ def main():
     u_results = Parallel(n_jobs=N_JOBS)(delayed(compute_sample)(i) for i in tqdm(range(n_samples)))
     u_array = np.array(u_results, dtype=np.float32)
 
+    u_t = torch.tensor(u_array, dtype=torch.float32)
     eps_t = torch.tensor(eps_vals, dtype=torch.float32).unsqueeze(1)
     theta_t = torch.tensor(theta_vals, dtype=torch.float32).unsqueeze(1)
+
     c1_t = torch.tensor(c1_vals, dtype=torch.float32).unsqueeze(1)
     c2_t = torch.tensor(c2_vals, dtype=torch.float32).unsqueeze(1)
     c3_t = torch.tensor(c3_vals, dtype=torch.float32).unsqueeze(1)
 
-    mu_array = torch.cat((eps_t, theta_t, c1_t, c2_t, c3_t), dim=1).numpy()
+    mu_t = torch.cat((c1_t, c2_t, c3_t), dim=1)
 
-    np.save(f'{save_dir}/u_data.npy', u_array)
-    np.save(f'{save_dir}/mu_data.npy', mu_array)
-    
-    print(f"Generazione completata! Dati salvati in {save_dir}/")
+    data_to_save = {
+        'u': u_t,
+        'eps': eps_t,
+        'theta': theta_t,
+        'mu': mu_t
+    }
 
+    filename = f"{save_dir}/stokes_data_{n_samples}.pt"
+    torch.save(data_to_save, filename)
 
 if __name__ == "__main__":
         main()
