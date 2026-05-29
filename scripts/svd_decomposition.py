@@ -11,13 +11,22 @@ from podcnf.Loader import LoadData
 def main():
     print("Start POD and Data Preprocessing:")
 
-    input_file = "data/stokes_data_6400.pt"
+    # input_file = "data/stokes_data_6400.pt" # Stokes
+    input_file = "data/data_linear_density_2pi.pt" # Linear Elasticity
     n_basis = 20 # to be choosen
     batch_size = 64
 
     dataset = torch.load(input_file, weights_only=True)
-    u = dataset['u']
-    mu = dataset['mu']
+
+    # Stokes
+    # u = dataset['u']
+    # mu = dataset['mu']
+
+    # Elastic
+    mass = dataset['mass']
+    delta = dataset['delta']
+    mu = torch.cat((mass, delta), dim = 1)
+    u = dataset['u_data']
 
     n_samples = u.shape[0]
     n_train = int(n_samples * 0.75)
@@ -39,16 +48,26 @@ def main():
     errors = torch.linalg.norm(residuals, dim=1) / torch.linalg.norm(u_val_true, dim=1)
     print("Basis projection error on Validation: %s" % num2p(errors.mean().item()))
     
-    os.makedirs('results/stokes', exist_ok=True)
+    # os.makedirs('results/stokes', exist_ok=True) # Stokes
+    os.makedirs('results/elastic', exist_ok=True) # Elastic
 
-    torch.save(V, 'results/stokes/V_POD_matrix.pt')
+    # torch.save(V, 'results/stokes/V_POD_matrix.pt') # Stokes
+    torch.save(V, 'results/elastic/V_POD_matrix.pt') # Elastic
 
+    # Stokes
+    # torch.save({
+    #     'c': c,
+    #     'mu': mu,
+    #     'eps': dataset['eps'],
+    #     'theta': dataset['theta']
+    # }, f'data/stokes_data_reduced_{n_samples}.pt')
+
+    # Elastic
     torch.save({
         'c': c,
         'mu': mu,
-        'eps': dataset['eps'],
-        'theta': dataset['theta']
-    }, f'data/stokes_data_reduced_{n_samples}.pt')
+
+    }, f'data/elastic_data_reduced_{n_samples}.pt')
 
     print("Data Normalization:")
 
@@ -61,9 +80,16 @@ def main():
         drop_last=False
     )
 
-    with open('results/stokes/mu_scaler.pkl', 'wb') as f:
+    # Stokes
+    # with open('results/stokes/mu_scaler.pkl', 'wb') as f:
+    #     pickle.dump(mu_scaler, f)
+    # with open('results/stokes/c_scaler.pkl', 'wb') as f:
+    #     pickle.dump(c_scaler, f)
+
+    # Elastic
+    with open('results/elastic/mu_scaler.pkl', 'wb') as f:
         pickle.dump(mu_scaler, f)
-    with open('results/stokes/c_scaler.pkl', 'wb') as f:
+    with open('results/elastic/c_scaler.pkl', 'wb') as f:
         pickle.dump(c_scaler, f)
 
 if __name__ == "__main__":
