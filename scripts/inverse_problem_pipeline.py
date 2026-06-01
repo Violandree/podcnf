@@ -111,7 +111,7 @@ def main():
     # Load reduced data
     reduced_input_file = os.path.join(target_folder_data, "elastic_data_reduced_6400.pt")
     if not os.path.exists(reduced_input_file):
-        gdown.download(id="19304ojlsmuL7hntN-m8KeR_CrAZD7wHb", quiet=True, output=reduced_input_file)
+        gdown.download(id="1FX_9MQ1gAG4Xqyo3HGoGW0Tvokuouqdq", quiet=True, output=reduced_input_file)
     reduced_dataset = torch.load(reduced_input_file, map_location="cpu", weights_only=True)
     mu = reduced_dataset['mu']
     c = reduced_dataset['c']
