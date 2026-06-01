@@ -126,7 +126,7 @@ def main():
     # c_scaler and mu_scaler
     c_scaler_path = os.path.join(target_folder, "c_scaler.pkl")
     if not os.path.exists(c_scaler_path):
-        gdown.download(id="1k0WgaeP4hXHJEwOd8Ng9Tv7Pbi2iSa9g", quiet=True, output=c_scaler_path)
+        gdown.download(id="12XBewDNM8SSwPoJxmUuXjUXD3kC3lFBr", quiet=True, output=c_scaler_path)
     with open(c_scaler_path, "rb") as file:
         c_scaler = pickle.load(file)
 
@@ -139,7 +139,7 @@ def main():
     # V_POD
     V_file = os.path.join(target_folder, "V_POD_matrix.pt")
     if not os.path.exists(V_file):
-        gdown.download(id="1R2u27onqNzsbkvHPWFlrmRuzXyGod_NJ", quiet=True, fuzzy=True, output=V_file)
+        gdown.download(id="1k0WgaeP4hXHJEwOd8Ng9Tv7Pbi2iSa9g", quiet=True, fuzzy=True, output=V_file)
     V = torch.load(V_file, map_location="cpu", weights_only=False)
 
     dim_x = mu.shape[1]
