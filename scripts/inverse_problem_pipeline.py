@@ -126,7 +126,7 @@ def main():
     # c_scaler and mu_scaler
     c_scaler_path = os.path.join(target_folder, "c_scaler.pkl")
     if not os.path.exists(c_scaler_path):
-        gdown.download(id="12XBewDNM8SSwPoJxmUuXjUXD3kC3lFBr", quiet=True, output=c_scaler_path)
+        gdown.download(id="1k0WgaeP4hXHJEwOd8Ng9Tv7Pbi2iSa9g", quiet=True, output=c_scaler_path)
     with open(c_scaler_path, "rb") as file:
         c_scaler = pickle.load(file)
 
