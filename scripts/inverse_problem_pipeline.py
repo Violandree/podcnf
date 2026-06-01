@@ -140,8 +140,7 @@ def main():
     V_file = os.path.join(target_folder, "V_POD_matrix.pt")
     if not os.path.exists(V_file):
         gdown.download(id="1R2u27onqNzsbkvHPWFlrmRuzXyGod_NJ", quiet=True, output=V_file)
-        
-    V = torch.load(V_file, map_location="cpu", weights_only=True)
+    V = torch.load(V_file, map_location="cpu", weights_only=False)
 
     dim_x = mu.shape[1]
     dim_y = c.shape[1]
