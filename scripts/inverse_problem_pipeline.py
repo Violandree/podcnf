@@ -166,7 +166,7 @@ def main():
     u_surface_sensor = u[:, surface_idx] 
     print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")   
 
-    n_simulations = 1
+    n_simulations = 8
     n_samples = mu.shape[0]
     n_val = 6081
 
