@@ -10,7 +10,7 @@ def main():
     print("Starting generation Stokes Data:")
 
     n_samples = 2
-    n_jobs = 2
+    N_JOBS = 2
 
     save_dir = '../data'
     os.makedirs(save_dir, exist_ok=True)
