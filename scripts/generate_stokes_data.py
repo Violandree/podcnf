@@ -9,7 +9,7 @@ from podcnf.DataGenerationStokes import ADR, stokes, inflows, bi
 def main():
     print("Starting generation Stokes Data:")
 
-    n_samples = 2
+    n_samples = 20
     N_JOBS = 2
 
     save_dir = '../data'
