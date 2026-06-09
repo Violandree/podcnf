@@ -149,37 +149,16 @@ class NormalizingFlow(nn.Module):
                 
         return trajectory
 
-def sample_same_mu(model: NormalizingFlow,
-                   mu, V,
-                   device,
-                   norm_scaler, mu_scaler, c_scaler,
-                   n_generations):
+    def sample_same_mu(self, muj, nrep):
 
-    model.eval()
+        self.eval()
+        mu_selected = muj.reshape(1,-1)
 
-    mu_selected = torch.tensor(mu.reshape(1,-1), dtype=torch.float32).to(device)
+        # Generates samples starting give the value of mu_test
+        with torch.no_grad():
+            mu_repeated = mu_selected.repeat(nrep, 1) # n_generations
 
-    if norm_scaler != None:
-        mu_selected = torch.tensor(mu_scaler.transform(mu_selected.cpu().reshape(1,-1)), dtype=torch.float32).to(device)
+            # Sample from the model
+            c_samples = self.sample(mu_repeated)
 
-    # Generates samples starting give the value of mu_test
-    with torch.no_grad():
-        mu_repeated = mu_selected.repeat(n_generations, 1) # n_generations
-
-        # Sample from the model
-        c_samples = model.sample(mu_repeated)
-
-        # Get back to the values non-normalized
-        if norm_scaler != None:
-            c_samples = c_scaler.inverse_transform(c_samples.cpu().numpy())
-
-        # c = V.T * u  =>  u = c * V.T
-        # Reconstruct the solution
-        if norm_scaler != None:
-            V_torch = torch.tensor(V, dtype=torch.float32)
-        else:
-            V_torch = torch.tensor(V, dtype=torch.float32).to(device) # without scaling put .to(device)
-
-        u_reconstructed = torch.tensor(c_samples, dtype=torch.float32) @ V_torch.T
-
-    return u_reconstructed
+        return c_samples
