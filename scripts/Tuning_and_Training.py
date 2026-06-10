@@ -1,6 +1,10 @@
 import os
+import pickle
 import torch
 from time import perf_counter
+
+import numpy as np
+from scipy.linalg import svd
 
 from podcnf.Loader import LoadData
 from podcnf.NFmodel import NormalizingFlow
@@ -23,27 +27,56 @@ def main():
     print(f"PyTorch version: {torch.__version__}")
     print(f"Device: {device}")
 
-    input_file = "data/stokes_data_reduced_6400.pt" 
+    # Already decomposed and scaled
+    # input_file = "data/stokes_data_reduced_6400.pt" 
+    # mu = dataset['mu'].numpy()[:200]
+    # c = dataset['c'].numpy()[:200]
+    # n_samples = mu.shape[0]
+
+    # Load data
+    input_file = "data/stokes_data_6400.pt"
     print(f"\nLoading data from {input_file}...")
-
     dataset = torch.load(input_file, weights_only=True)
-    mu = dataset['mu'].numpy()[:200]
-    c = dataset['c'].numpy()[:200]
 
-    n_samples = mu.shape[0]
+    u = dataset['u']
+    mu = dataset['mu']
+
+    n_samples = u.shape[0]
     n_train = int(n_samples * 0.75)
     n_val = int(n_train + n_samples * 0.20)
+    n_test = int(n_samples * 0.05)
+
+    shuffle = True
+    drop_last = False
+
+    # norm_scaler = None # No normalization
+    norm_scaler = True # StandardScaler()
+    # norm_scaler = False # MinMaxScaler()
+
+    X, s, _ = svd(u[:n_train].T, full_matrices = False)
+    n_basis = 20
+    V = X[:, :n_basis]
+    c = u @ V
+
     batch_size = 64
     
     dim_x = mu.shape[1]
     dim_y = c.shape[1]
 
-    train_loader, val_loader, test_loader, mu_scaler, c_scaler = LoadData(
-        mu, c, n_train=n_train, n_val=n_val,
-        BATCH_SIZE=batch_size, norm_scaler=True, drop_last=False
-    )
+    print(f"dim x:\t{dim_x}\ndim y:\t{dim_y}")
 
-    DO_TUNING = False  # Imposta a True se vuoi ricalcolare i parametri
+    if norm_scaler == None:
+        train_loader, val_loader, test_loader = LoadData(
+            mu, c, n_train=n_train, n_val=n_val,
+            BATCH_SIZE=batch_size, norm_scaler=True, drop_last=False
+        )
+    else:
+        train_loader, val_loader, test_loader, mu_scaler, c_scaler = LoadData(
+            mu, c, n_train=n_train, n_val=n_val,
+            BATCH_SIZE=batch_size, norm_scaler=True, drop_last=False
+        )
+
+    DO_TUNING = True
 
     if DO_TUNING:
         print("\nTuning Hyperparameters...")
@@ -79,10 +112,6 @@ def main():
         device=device
     ).to(device)
 
-    save_dir_temp = "results/stokes"
-    os.makedirs(save_dir_temp, exist_ok=True)
-    model_save_path = os.path.join(save_dir_temp, "model_best_temp.pt")
-
     print("\n>>>Start Training:")
     t0_tra = perf_counter()
     train_losses, val_losses = full_train(
@@ -100,7 +129,7 @@ def main():
     )
     print(f">>> Training\nExecution Time:\t{(perf_counter() - t0_tra)/60:.2f} min")
 
-    MODEL_NAME = 'NF_Stokes.pth'
+    MODEL_NAME = 'NF_Stokes_trial.pth'
     destination_folder = "results/stokes"
     os.makedirs(destination_folder, exist_ok=True)
     save_path = os.path.join(destination_folder, MODEL_NAME)
@@ -120,10 +149,17 @@ def main():
 
     torch.save(checkpoint, save_path)
     print(f"\nModel saved in: {save_path}")
-    
-    if os.path.exists(model_save_path):
-        os.remove(model_save_path)
-        print("File temporaneo eliminato.")
+
+    # Saving V_POD matrix and scalers
+    path_V = '../results/stokes/V_POD_matrix.pt'
+    torch.save(V, path_V)
+
+    os.makedirs('../results/stokes', exist_ok=True)
+
+    with open('../results/stokes/mu_scaler.pkl', 'wb') as f:
+        pickle.dump(mu_scaler, f)
+    with open('../results/stokes/c_scaler.pkl', 'wb') as f:
+        pickle.dump(c_scaler, f)
 
 if __name__ == "__main__":
     main()
