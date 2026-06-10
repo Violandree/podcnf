@@ -26,7 +26,7 @@ class GenerativeROM(object):
         raise RuntimeError("No decoding method specified.")
 
 class PODcnf(GenerativeROM):
-    def __init__(self, pod_matrix, NormalizingFlow: cnf_model, mu_scaler = None, c_scaler = None):
+    def __init__(self, pod_matrix, cnf_model, mu_scaler = None, c_scaler = None):
         self.V = pod_matrix
         self.cnf = cnf_model
         self.mu_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if mu_scaler is None else mu_scaler
