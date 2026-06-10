@@ -12,7 +12,7 @@ from podcnf.Training import full_train, tuning_parameters
 
 SEED = 42
 
-def main():
+def main(u, mu):
     print(">>> Starting Pipeline training NF:")
 
     if torch.cuda.is_available():
@@ -27,20 +27,6 @@ def main():
     print(f"PyTorch version: {torch.__version__}")
     print(f"Device: {device}")
 
-    # Already decomposed and scaled
-    # input_file = "data/stokes_data_reduced_6400.pt" 
-    # mu = dataset['mu'].numpy()[:200]
-    # c = dataset['c'].numpy()[:200]
-    # n_samples = mu.shape[0]
-
-    # Load data
-    input_file = "data/stokes_data_6400.pt"
-    print(f"\nLoading data from {input_file}...")
-    dataset = torch.load(input_file, weights_only=True)
-
-    u = dataset['u']
-    mu = dataset['mu']
-
     n_samples = u.shape[0]
     n_train = int(n_samples * 0.75)
     n_val = int(n_train + n_samples * 0.20)
@@ -53,6 +39,7 @@ def main():
     norm_scaler = True # StandardScaler()
     # norm_scaler = False # MinMaxScaler()
 
+    print("SVD computation...")
     X, s, _ = svd(u[:n_train].T, full_matrices = False)
     n_basis = 20
     V = X[:, :n_basis]
@@ -162,4 +149,13 @@ def main():
         pickle.dump(c_scaler, f)
 
 if __name__ == "__main__":
-    main()
+
+    # Here one should upload the data and the conditioning parameters
+    input_file = "data/stokes_data_6400.pt"
+    print(f"\nLoading data from {input_file}...")
+    dataset = torch.load(input_file, weights_only=True)
+
+    u = dataset['u']
+    mu = dataset['mu']
+
+    main(u, mu)
