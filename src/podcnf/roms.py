@@ -5,9 +5,9 @@ class TorchScaler(object):
     def __init__(self, vmin, scale, device):
         self.vmin = torch.tensor(vmin, dtype=torch.float32).to(device)
         self.scale = torch.tensor(scale, dtype=torch.float32).to(device)
-    def transform(self, x):
+    def inverse_transform(self, x):
         return x*self.scale + self.vmin
-    def inverse_transform(self, xtilde):
+    def inverse(self, xtilde):
         return (xtilde-self.vmin)/self.scale
 
 class GenerativeROM(object):
