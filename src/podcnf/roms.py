@@ -7,7 +7,7 @@ class TorchScaler(object):
         self.scale = torch.tensor(scale, dtype=torch.float32).to(device)
     def inverse_transform(self, x):
         return x*self.scale + self.vmin
-    def inverse(self, xtilde):
+    def transform(self, xtilde):
         return (xtilde-self.vmin)/self.scale
 
 class GenerativeROM(object):
