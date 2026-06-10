@@ -131,24 +131,6 @@ class NormalizingFlow(nn.Module):
                 z = z[:, inv_p]
         return z
 
-    def sample_trajectory(self, x: torch.Tensor) -> List[torch.Tensor]:
-        # Sample from the base distribution
-        z = self.base_dist.sample((x.shape[0],)) # x.shape[0] is the number of points to be evaluated
-        # Initialization of the trajectory
-        trajectory = [z.clone()]
-        # Forward transformation -> reverse=False
-        with torch.no_grad():
-            ldj = torch.zeros(x.shape[0], device=z.device)
-            for i, flow in reversed(list(enumerate(self.flows))):
-                z, ldj = flow(x, z, ldj, reverse=False)
-                # Inverse permutation
-                inv_p = torch.argsort(self.permutations[i])
-                z = z[:, inv_p]
-                # Save the current state in the trajectory
-                trajectory.append(z.clone())
-                
-        return trajectory
-
     def sample_same_mu(self, muj, nrep):
 
         self.eval()
@@ -156,9 +138,27 @@ class NormalizingFlow(nn.Module):
 
         # Generates samples starting give the value of mu_test
         with torch.no_grad():
-            mu_repeated = mu_selected.repeat(nrep, 1) # n_generations
+            mu_repeated = mu_selected.repeat(nrep, 1) # n repetitions
 
             # Sample from the model
             c_samples = self.sample(mu_repeated)
 
         return c_samples
+
+    # def sample_trajectory(self, x: torch.Tensor) -> List[torch.Tensor]:
+    #     # Sample from the base distribution
+    #     z = self.base_dist.sample((x.shape[0],)) # x.shape[0] is the number of points to be evaluated
+    #     # Initialization of the trajectory
+    #     trajectory = [z.clone()]
+    #     # Forward transformation -> reverse=False
+    #     with torch.no_grad():
+    #         ldj = torch.zeros(x.shape[0], device=z.device)
+    #         for i, flow in reversed(list(enumerate(self.flows))):
+    #             z, ldj = flow(x, z, ldj, reverse=False)
+    #             # Inverse permutation
+    #             inv_p = torch.argsort(self.permutations[i])
+    #             z = z[:, inv_p]
+    #             # Save the current state in the trajectory
+    #             trajectory.append(z.clone())
+                
+    #     return trajectory
