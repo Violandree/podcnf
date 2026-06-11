@@ -42,11 +42,11 @@ class PODcnf(GenerativeROM):
 
     @property
     def mu_scaler(self):
-        return __mu_scaler
+        return self.__mu_scaler
 
     @property
     def c_scaler(self):
-        return __c_scaler
+        return self.__c_scaler
 
     def sample_latent_same_mu(self, muj, nrep = 100):
         return self.c_scaler.inverse_transform(self.cnf.sample_same_mu(self.mu_scaler.transform(muj), nrep))
