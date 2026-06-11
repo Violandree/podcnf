@@ -7,9 +7,9 @@ from scipy.special import logsumexp
 from podcnf.DataGenerationLinearElasticity import FOMsampler
 
 def adaptive_metropolis_hastings(
-    flow_model, u_obs, theta_0, N, bounds,
-    mu_scaler, c_scaler, device,
-    V, surface_idx,
+    flow_model, u_obs, mu_0, N, bounds,
+    device,
+    surface_idx,
     temperature=1.0, C_0=None, n_0=100, epsilon=1e-6, s_d=None,
     n_generations=100, h=0.1
 ):
@@ -18,35 +18,22 @@ def adaptive_metropolis_hastings(
 
     # Outside the loop I'll compute the "projection" matrix into the subspace (62x20)
     # In this way u_sensor is directly given by: u_sensor = c * V_sensor'
-    V_sensors = V[surface_idx, :]
-    V_sensors_torch = torch.tensor(V_sensors, dtype=torch.float32).to(device)
-
-    u_obs_tensor = u_obs.to(device)
-    mean_c = torch.tensor(c_scaler.mean_, dtype=torch.float32).to(device)
-    scale_c = torch.tensor(c_scaler.scale_, dtype=torch.float32).to(device)
+    V_sensors = flow_model.V[surface_idx, :]
 
     # Initialization
-    theta_n = np.array(theta_0, dtype=np.float32)
-    d = len(theta_n)
-    theta_n_scaled = mu_scaler.transform(theta_n.reshape(1, -1))
-    theta_tensor = torch.tensor(theta_n_scaled, dtype=torch.float32).to(device)
+    mu_n = np.array(mu_0, dtype=np.float32)
+    d = len(mu_n)
+    mu_n_scaled = mu_scaler.transform(mu_n.reshape(1, -1))
 
-    def compute_log_likelihood(theta_t):
+    def compute_log_likelihood(mu_t):
         with torch.no_grad():
-            theta_rep = theta_t.repeat(n_generations, 1)
-            c_samples_norm = flow_model.sample(theta_rep) # sample ritorna (z, ldj), prendo z (c_samples)
-            c_samples = c_samples_norm * scale_c + mean_c
+
+            flow_model.sample_latent_same_mu(mu_n_scaled)
 
             # Projection on the sensors
             # [N_gen, 20] @ [20, 62] -> [N_gen, 62]
-            u_sensor_sample = c_samples @ V_sensors_torch.T
+            u_sensor_sample = c_samples @ V_sensors.T
 
-            # Da rivedere dal punto di vista teorico. In linea di prinicipio dal momento che il NF
-            # non da un'unica soluzione per un dato valore di theta, considera n_generations (= 100)
-            # sample, ognuno di questi fornisce una soluzione diversa. Per ogni soluzione fornita
-            # dal NF nel calcolo l'errore in norma L2 con u_obs_tensor. Ottenute le distanze utilizza
-            # un Kernel Gaussiano per vedere la bontà del theta selezionato
-            # L2-distance
             diff = u_sensor_sample - u_obs_tensor.reshape(1, -1)
             dj2 = diff.pow(2).sum(dim=1) # [N_gen]
 
@@ -57,7 +44,7 @@ def adaptive_metropolis_hastings(
             return log_pi.item()
 
     # Initial value for the Log-likelihood
-    log_pi_n = compute_log_likelihood(theta_tensor)
+    log_pi_n = compute_log_likelihood(mu_tensor)
 
     chain = []
     accepted_count = 0
@@ -68,7 +55,7 @@ def adaptive_metropolis_hastings(
     else:
         C_n = np.array(C_0)
 
-    theta_bar_n = theta_n.copy()
+    mu_bar_n = mu_n.copy()
 
     # Scaling factor
     if s_d is None:
@@ -86,13 +73,13 @@ def adaptive_metropolis_hastings(
             proposal_cov = scaling_val * C_n + epsilon * np.eye(d)
 
         perturbation = np.random.multivariate_normal(np.zeros(d), proposal_cov)
-        Y = theta_n + perturbation
+        Y = mu_n + perturbation
 
         # Check Prior (Bounds)
         if (Y[0] < bounds['m_min'] or Y[0] > bounds['m_max'] or
             Y[1] < bounds['d_min'] or Y[1] > bounds['d_max']):
-            chain.append(theta_n)
-            theta_next = theta_n
+            chain.append(mu_n)
+            mu_next = mu_n
         else:
             # Compute the likelihood for the candidate
             Y_scaled = mu_scaler.transform(Y.reshape(1, -1))
@@ -104,19 +91,19 @@ def adaptive_metropolis_hastings(
             log_alpha = (log_pi_Y - log_pi_n) / temperature
 
             if np.log(np.random.rand()) < log_alpha:
-                theta_n = Y
+                mu_n = Y
                 log_pi_n = log_pi_Y
                 accepted_count += 1
 
-            chain.append(theta_n)
-            theta_next = theta_n
+            chain.append(mu_n)
+            mu_next = mu_n
 
         # Updating the covariance
         if n > n_0:
-            theta_bar_prev = theta_bar_n.copy()
-            theta_bar_n = (n * theta_bar_prev + theta_next) / (n + 1)
+            mu_bar_prev = mu_bar_n.copy()
+            mu_bar_n = (n * mu_bar_prev + mu_next) / (n + 1)
 
-            dt = (theta_next - theta_bar_prev).reshape(-1, 1)
+            dt = (mu_next - mu_bar_prev).reshape(-1, 1)
             term_update = np.dot(dt, dt.T)
             C_n = ((n - 1) / n) * C_n + (scaling_val / n) * (term_update * (n / (n + 1)) + epsilon * np.eye(d))
 
@@ -127,7 +114,7 @@ def adaptive_metropolis_hastings(
 
 
 def adaptive_metropolis_hastings_fom(
-    u_obs, theta_0, N, bounds, surface_idx,
+    u_obs, mu_0, N, bounds, surface_idx,
     temperature=1.0, C_0=None, n_0=100, epsilon=1e-6, s_d=None,
     n_generations=10, h=0.1
 ):
@@ -135,11 +122,11 @@ def adaptive_metropolis_hastings_fom(
     u_obs_np = np.array(u_obs)
 
     # Initialization
-    theta_n = np.array(theta_0, dtype=np.float64)
-    d = len(theta_n)
+    mu_n = np.array(mu_0, dtype=np.float64)
+    d = len(mu_n)
 
-    def compute_log_likelihood(theta_t):
-        m_in, d_in = theta_t[0], theta_t[1]
+    def compute_log_likelihood(mu_t):
+        m_in, d_in = mu_t[0], mu_t[1]
         u_sensor_samples = np.zeros((n_generations, len(surface_idx)))
 
         # Marginalizing over the stochasticity of the PDE using the FOM
@@ -161,7 +148,7 @@ def adaptive_metropolis_hastings_fom(
 
     # Initial value for the Log-likelihood
     print(f"Computing initial likelihood (requires {n_generations} FOM solves)...")
-    log_pi_n = compute_log_likelihood(theta_n)
+    log_pi_n = compute_log_likelihood(mu_n)
     print("Initial likelihood computed. Starting MCMC loop...")
 
     chain = []
@@ -173,7 +160,7 @@ def adaptive_metropolis_hastings_fom(
     else:
         C_n = np.array(C_0)
 
-    theta_bar_n = theta_n.copy()
+    mu_bar_n = mu_n.copy()
 
     # Scaling factor for the proposal distribution
     if s_d is None:
@@ -191,13 +178,13 @@ def adaptive_metropolis_hastings_fom(
             proposal_cov = scaling_val * C_n + epsilon * np.eye(d)
 
         perturbation = np.random.multivariate_normal(np.zeros(d), proposal_cov)
-        Y = theta_n + perturbation
+        Y = mu_n + perturbation
 
         # Check Prior (Bounds)
         if (Y[0] < bounds['m_min'] or Y[0] > bounds['m_max'] or
             Y[1] < bounds['d_min'] or Y[1] > bounds['d_max']):
-            chain.append(theta_n)
-            theta_next = theta_n
+            chain.append(mu_n)
+            mu_next = mu_n
         else:
             # Compute the likelihood for the candidate directly with the physical parameters
             log_pi_Y = compute_log_likelihood(Y)
@@ -206,19 +193,19 @@ def adaptive_metropolis_hastings_fom(
             log_alpha = (log_pi_Y - log_pi_n) / temperature
 
             if np.log(np.random.rand()) < log_alpha:
-                theta_n = Y
+                mu_n = Y
                 log_pi_n = log_pi_Y
                 accepted_count += 1
 
-            chain.append(theta_n)
-            theta_next = theta_n
+            chain.append(mu_n)
+            mu_next = mu_n
 
         # Updating the covariance
         if n > n_0:
-            theta_bar_prev = theta_bar_n.copy()
-            theta_bar_n = (n * theta_bar_prev + theta_next) / (n + 1)
+            mu_bar_prev = mu_bar_n.copy()
+            mu_bar_n = (n * mu_bar_prev + mu_next) / (n + 1)
 
-            dt = (theta_next - theta_bar_prev).reshape(-1, 1)
+            dt = (mu_next - mu_bar_prev).reshape(-1, 1)
             term_update = np.dot(dt, dt.T)
 
             # Update step

@@ -27,10 +27,26 @@ class GenerativeROM(object):
 
 class PODcnf(GenerativeROM):
     def __init__(self, pod_matrix, cnf_model, mu_scaler = None, c_scaler = None):
-        self.V = pod_matrix
-        self.cnf = cnf_model
-        self.mu_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if mu_scaler is None else mu_scaler
-        self.c_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if c_scaler is None else c_scaler
+        self.__V = pod_matrix
+        self.__cnf = cnf_model
+        self.__mu_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if mu_scaler is None else mu_scaler
+        self.__c_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if c_scaler is None else c_scaler
+
+    @property
+    def V(self):
+        return self.__V
+
+    @property
+    def cnf(self):
+        return self.__cnf
+
+    @property
+    def mu_scaler(self):
+        return __mu_scaler
+
+    @property
+    def c_scaler(self):
+        return __c_scaler
 
     def sample_latent_same_mu(self, muj, nrep = 100):
         return self.c_scaler.inverse_transform(self.cnf.sample_same_mu(self.mu_scaler.transform(muj), nrep))
