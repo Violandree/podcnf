@@ -53,3 +53,13 @@ class PODcnf(GenerativeROM):
 
     def decode(self, c):
         return c @ self.V.T
+
+class LinearElastic(GenerativeROM):
+    def __init__(self, FOMsampler):
+        self.__fom = FOMsampler
+
+    @property
+    def fom(self):
+        return self.__fom
+
+    
