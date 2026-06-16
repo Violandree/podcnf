@@ -295,7 +295,7 @@ def main():
         print("\n--- REFINEMENT ---")
         cov_for_refinement_FOM = cov_learned_FOM + torch.eye(2, device=device) * 1e-6
         t1_FOM = perf_counter()
-        chain_refined_FOM, _ = daptive_metropolis_hastings(
+        chain_refined_FOM, _ = adaptive_metropolis_hastings(
             generator=FOMgenerator,
             Q=Q2,
             mu_0=mu_0,
