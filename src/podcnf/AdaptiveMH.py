@@ -1,6 +1,8 @@
 import torch
 from torch.distributions.multivariate_normal import MultivariateNormal
 
+import numpy as np
+
 from tqdm import tqdm
 
 def adaptive_metropolis_hastings(
