@@ -24,6 +24,7 @@ from podcnf.NFmodel import NormalizingFlow
 from podcnf.AdaptiveMH import adaptive_metropolis_hastings
 from podcnf.Utils import Wasser_dist
 from podcnf.DataGenerationLinearElasticity import FOMsampler
+from podcnf.roms import TorchScaler
 
 SEED = 42
 
