@@ -170,7 +170,6 @@ def main():
 
     NF_linear = NormalizingFlow(dim_x, dim_y, num_flows, hidden_size, hidden_depth, device).to(device)
     NF_linear.load_state_dict(loaded_model)
-    flow = NF_linear
 
     num_sensors = 31
     sur = [0,1] # top-left already added
@@ -184,7 +183,7 @@ def main():
     u_surface_sensor = u[:, surface_idx] 
     print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")   
 
-    n_simulations = 10
+    n_simulations = 1
     n_samples = mu.shape[0]
     n_val = 6081
 
@@ -201,6 +200,8 @@ def main():
     test_idx = random.sample(range(n_val, n_samples + 1), n_simulations)
 
     verbose = True
+
+    podcnf = PODcnf(V, NF_linear, mu_scaler, c_scaler)
 
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
