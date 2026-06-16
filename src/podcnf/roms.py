@@ -52,14 +52,4 @@ class PODcnf(GenerativeROM):
         return self.c_scaler.inverse_transform(self.cnf.sample_same_mu(self.mu_scaler.transform(muj), nrep))
 
     def decode(self, c):
-        return c @ self.V.T
-
-class LinearElastic(GenerativeROM):
-    def __init__(self, FOMsampler):
-        self.__fom = FOMsampler
-
-    @property
-    def fom(self):
-        return self.__fom
-
-    
+        return c @ self.V.T    
