@@ -208,7 +208,7 @@ def main():
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
 
-        mu_true_phys = mu[test_idx[i]].numpy()
+        mu_true_phys = mu[test_idx[i]].cpu().numpy()
         u_obs = u_surface_sensor[test_idx[i]].to(device)
         
         mu_0 = torch.tensor(
