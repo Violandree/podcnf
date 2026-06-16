@@ -36,6 +36,8 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+from dlroms import *
+
 def FOMgenerator(muj, nrep):
   if(isinstance(muj, torch.Tensor)):
     mu0 = muj.cpu().numpy()
@@ -113,7 +115,7 @@ def main():
     target_folder_data = os.path.join("..", "data")
     os.makedirs(target_folder_data, exist_ok=True)
 
-    results_dir = os.path.join("results")
+    results_dir = os.path.join("inverse_results")
     os.makedirs(results_dir, exist_ok=True)
 
     # Load model
@@ -219,52 +221,52 @@ def main():
         print(f"Initial guess: {mu_0}")
 
         # PODCNF
-        print(">>> Adaptive MH with PODCNF:")
-        print("\n--- EXPLORATION ---")
+        # print(">>> Adaptive MH with PODCNF:")
+        # print("\n--- EXPLORATION ---")
         initial_cov_expl = torch.tensor([[0.001, 0.0], [0.0, 0.001]], dtype=torch.float32, device=device)
 
-        t0 = perf_counter()
-        chain_exploration, cov_learned = adaptive_metropolis_hastings(
-            generator=podcnf.sample_latent_same_mu,
-            Q=Q,
-            mu_0=mu_0,
-            obs=u_obs,
-            N=1000,
-            bounds=bounds,
-            temperature=5.0,
-            C_0=initial_cov_expl,
-            n_0=500,
-            s_d=2.4,
-            nrep=100,
-            h=0.1,
-            verbose=verbose
-        )
-        t_exp = perf_counter() - t0
-        best_guess = chain_exploration[-1].clone().detach()
-        print(f"Best Guess after exploration: {best_guess}")
+        # t0 = perf_counter()
+        # chain_exploration, cov_learned = adaptive_metropolis_hastings(
+        #     generator=podcnf.sample_latent_same_mu,
+        #     Q=Q1,
+        #     mu_0=mu_0,
+        #     obs=u_obs,
+        #     N=1000,
+        #     bounds=bounds,
+        #     temperature=5.0,
+        #     C_0=initial_cov_expl,
+        #     n_0=500,
+        #     s_d=2.4,
+        #     nrep=100,
+        #     h=0.1,
+        #     verbose=verbose
+        # )
+        # t_exp = perf_counter() - t0
+        # best_guess = chain_exploration[-1].clone().detach()
+        # print(f"Best Guess after exploration: {best_guess}")
 
-        print("\n--- REFINEMENT ---")
-        cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
-        t1 = perf_counter()
-        chain_refined, cov_refined = adaptive_metropolis_hastings(
-            generator=podcnf.sample_latent_same_mu,
-            Q=Q,
-            mu_0=best_guess,
-            obs=u_obs,
-            N=3000,
-            bounds=bounds,
-            temperature=1.0,
-            C_0=cov_for_refinement,
-            n_0=0,
-            s_d=0.35,
-            nrep=200,
-            h=0.03,
-            verbose=verbose
-        )
-        t_ref = perf_counter() - t1
-        print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
+        # print("\n--- REFINEMENT ---")
+        # cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
+        # t1 = perf_counter()
+        # chain_refined, cov_refined = adaptive_metropolis_hastings(
+        #     generator=podcnf.sample_latent_same_mu,
+        #     Q=Q1,
+        #     mu_0=best_guess,
+        #     obs=u_obs,
+        #     N=3000,
+        #     bounds=bounds,
+        #     temperature=1.0,
+        #     C_0=cov_for_refinement,
+        #     n_0=0,
+        #     s_d=0.35,
+        #     nrep=200,
+        #     h=0.03,
+        #     verbose=verbose
+        # )
+        # t_ref = perf_counter() - t1
+        # print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
         
-        plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
+        # plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
 
         # FOM
         print("\n>>> Adaptive MH with FOM:")
@@ -295,7 +297,7 @@ def main():
         t1_FOM = perf_counter()
         chain_refined_FOM, _ = daptive_metropolis_hastings(
             generator=FOMgenerator,
-            Q=lambda ufom: ufom[:, surface_idx],
+            Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
             N=3000,
