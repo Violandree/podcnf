@@ -293,7 +293,7 @@ def main():
         print(f"Exploration Time: {t_exp_FOM:.2f} s - Best Guess: {best_guess_FOM}")
 
         print("\n--- REFINEMENT ---")
-        cov_for_refinement_FOM = cov_learned + torch.eye(2, device=device) * 1e-6
+        cov_for_refinement_FOM = cov_learned_FOM + torch.eye(2, device=device) * 1e-6
         t1_FOM = perf_counter()
         chain_refined_FOM, _ = daptive_metropolis_hastings(
             generator=FOMgenerator,
@@ -303,7 +303,7 @@ def main():
             N=1500,
             bounds=bounds,
             temperature=1.0,
-            C_0=initial_cov_expl,
+            C_0=cov_for_refinement_FOM,
             n_0=0,
             s_d=0.35,
             nrep=25,
