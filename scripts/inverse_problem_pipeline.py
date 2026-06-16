@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from time import perf_counter
+import random
 
 import torch
 from tqdm import tqdm
