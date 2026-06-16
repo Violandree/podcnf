@@ -143,7 +143,7 @@ def main():
     with open(c_scaler_path, "rb") as file:
         c_scal = pickle.load(file)
 
-    mu_scaler = TorchScaler(mu_scal.mean_, mu_scal.scale_, device)
+    c_scaler = TorchScaler(c_scal.mean_, c_scal.scale_, device)
 
     mu_scaler_path = os.path.join(target_folder, "mu_scaler.pkl")
     if not os.path.exists(mu_scaler_path):
@@ -151,7 +151,7 @@ def main():
     with open(mu_scaler_path, "rb") as file:
         mu_scal = pickle.load(file)
 
-    c_scaler = TorchScaler(c_scal.mean_, c_scal.scale_, device)
+    mu_scaler = TorchScaler(mu_scal.mean_, mu_scal.scale_, device)
 
     # V_POD
     V_file = os.path.join(target_folder, "V_POD_matrix.pt")
