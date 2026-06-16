@@ -21,8 +21,9 @@ except ImportError:
     pass
 
 from podcnf.NFmodel import NormalizingFlow
-from podcnf.AdaptiveMH import adaptive_metropolis_hastings, adaptive_metropolis_hastings_fom
+from podcnf.AdaptiveMH import adaptive_metropolis_hastings
 from podcnf.Utils import Wasser_dist
+from podcnf.DataGenerationLinearElasticity import FOMsampler
 
 SEED = 42
 
@@ -32,6 +33,15 @@ if torch.cuda.is_available():
     torch.backends.cudnn.benchmark = True
 else:
     device = torch.device("cpu")
+
+def FOMgenerator(muj, nrep):
+  if(isinstance(muj, torch.Tensor)):
+    mu0 = muj.cpu().numpy()
+  else:
+    mu0 = muj
+  return torch.tensor(np.stack([FOMsampler(j, *mu0, option = 1)[-2] for j in range(nrep)],
+                               axis = 0), 
+                device = device)
 
 def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir):
     full_chain = np.vstack([chain_exp, chain_ref])
@@ -97,9 +107,11 @@ def main():
     # Directories
     target_folder = os.path.join("..", "results", "elastic")
     os.makedirs(target_folder, exist_ok=True)
+
     target_folder_data = os.path.join("..", "data")
     os.makedirs(target_folder_data, exist_ok=True)
-    results_dir = os.path.join("..", "results", "inverse_problem")
+
+    results_dir = os.path.join("results")
     os.makedirs(results_dir, exist_ok=True)
 
     # Load model
@@ -112,7 +124,7 @@ def main():
     reduced_input_file = os.path.join(target_folder_data, "elastic_data_reduced_6400.pt")
     if not os.path.exists(reduced_input_file):
         gdown.download(id="1FX_9MQ1gAG4Xqyo3HGoGW0Tvokuouqdq", quiet=True, output=reduced_input_file)
-    reduced_dataset = torch.load(reduced_input_file, map_location="cpu", weights_only=True)
+    reduced_dataset = torch.load(reduced_input_file, map_location=device, weights_only=True)
     mu = reduced_dataset['mu']
     c = reduced_dataset['c']
 
@@ -120,7 +132,7 @@ def main():
     raw_data_file = os.path.join(target_folder_data, "data_linear_density_2pi.pt")
     if not os.path.exists(raw_data_file):
         gdown.download(id="1NYiXCqCNLhB87o3OlAav6YfiAO9qoBnM", quiet=True, output=raw_data_file)
-    loaded_data = torch.load(raw_data_file, map_location="cpu")
+    loaded_data = torch.load(raw_data_file, map_location=device)
     u = loaded_data['u_data']
 
     # c_scaler and mu_scaler
@@ -128,19 +140,23 @@ def main():
     if not os.path.exists(c_scaler_path):
         gdown.download(id="12XBewDNM8SSwPoJxmUuXjUXD3kC3lFBr", quiet=True, output=c_scaler_path)
     with open(c_scaler_path, "rb") as file:
-        c_scaler = pickle.load(file)
+        c_scal = pickle.load(file)
+
+    mu_scaler = TorchScaler(mu_scal.mean_, mu_scal.scale_, device)
 
     mu_scaler_path = os.path.join(target_folder, "mu_scaler.pkl")
     if not os.path.exists(mu_scaler_path):
         gdown.download(id="1R2u27onqNzsbkvHPWFlrmRuzXyGod_NJ", quiet=True, output=mu_scaler_path)
     with open(mu_scaler_path, "rb") as file:
-        mu_scaler = pickle.load(file)
+        mu_scal = pickle.load(file)
+
+    c_scaler = TorchScaler(c_scal.mean_, c_scal.scale_, device)
 
     # V_POD
     V_file = os.path.join(target_folder, "V_POD_matrix.pt")
     if not os.path.exists(V_file):
         gdown.download(id="1k0WgaeP4hXHJEwOd8Ng9Tv7Pbi2iSa9g", quiet=True, output=V_file)
-    V = torch.load(V_file, map_location="cpu", weights_only=False)
+    V = torch.load(V_file, map_location=device, weights_only=False)
 
     dim_x = mu.shape[1]
     dim_y = c.shape[1]
@@ -175,71 +191,124 @@ def main():
         'd_min': 0.05, 'd_max': 0.25
     }
 
+    V_sensors = V[surface_idx, :].to(device)
+
+    Q1 = lambda c: c @ V_sensors.T # For generative model
+    Q2 = lambda ufom: ufom[:, surface_idx] # For Full Order Modell
+
+    test_idx = random.sample(range(n_val, n_samples + 1), n_simulations)
+
+    verbose = True
+
     for i in range(n_simulations):
-        test_idx = np.random.randint(n_val, n_samples)
-        print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx}\n")
+        print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
 
-        mu_true_phys = mu[test_idx].numpy()
-        u_obs = u_surface_sensor[test_idx]
-        initial_guess = [np.random.rand() + 1, np.random.rand()*0.1 + 0.15]
+        mu_true_phys = mu[test_idx[i]].numpy()
+        u_obs = u_surface_sensor[test_idx[i]].to(device)
+        
+        mu_0 = torch.tensor(
+            [torch.rand(1).item() + 1.0, torch.rand(1).item() * 0.1 + 0.15],
+            dtype=torch.float32,
+            device=device
+        )
 
-        print(f"Index: {test_idx} - True Mass={mu_true_phys[0]:.4f}, True Delta={mu_true_phys[1]:.4f}")
+        print(f"Index: {test_idx[i]} - True Mass={mu_true_phys[0]:.4f}, True Delta={mu_true_phys[1]:.4f}")
         print(f"Initial guess: {initial_guess}")
 
         # PODCNF
         print(">>> Adaptive MH with PODCNF:")
         print("\n--- EXPLORATION ---")
-        initial_cov_expl = [[0.001, 0], [0, 0.001]]
+        initial_cov_expl = torch.tensor([[0.001, 0.0], [0.0, 0.001]], dtype=torch.float32, device=device)
 
         t0 = perf_counter()
         chain_exploration, cov_learned = adaptive_metropolis_hastings(
-            flow_model=flow, u_obs=u_obs, theta_0=initial_guess, N=10000, bounds=bounds,
-            mu_scaler=mu_scaler, c_scaler=c_scaler, device=device, V=V, surface_idx=surface_idx,
-            temperature=5.0, C_0=initial_cov_expl, n_0=500, s_d=2.4, n_generations=100, h=0.1
+            generator=podcnf.sample_latent_same_mu,
+            Q=Q,
+            mu_0=mu_0,
+            obs=u_obs,
+            N=10000,
+            bounds=bounds,
+            temperature=5.0,
+            C_0=initial_cov_expl,
+            n_0=500,
+            s_d=2.4,
+            nrep=100,
+            h=0.1,
+            verbose=verbose
         )
         t_exp = perf_counter() - t0
-        best_guess = chain_exploration[-1]
+        best_guess = chain_exploration[-1].clone().detach()
         print(f"Best Guess after exploration: {best_guess}")
 
         print("\n--- REFINEMENT ---")
-        cov_for_refinement = cov_learned + np.eye(2) * 1e-6
+        cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
         t1 = perf_counter()
-        chain_refined, _ = adaptive_metropolis_hastings(
-            flow_model=flow, u_obs=u_obs, theta_0=best_guess, N=30000, bounds=bounds,
-            mu_scaler=mu_scaler, c_scaler=c_scaler, device=device, V=V, surface_idx=surface_idx,
-            temperature=1.0, C_0=cov_for_refinement, n_0=0, s_d=0.35, n_generations=200, h=0.03
+        chain_refined, cov_refined = adaptive_metropolis_hastings(
+            generator=podcnf.sample_latent_same_mu,
+            Q=Q,
+            mu_0=best_guess,
+            obs=u_obs,
+            N=30000,
+            bounds=bounds,
+            temperature=1.0,
+            C_0=cov_for_refinement,
+            n_0=0,
+            s_d=0.35,
+            nrep=200,
+            h=0.03,
+            verbose=verbose
         )
         t_ref = perf_counter() - t1
         print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
         
-        plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx, results_dir)
+        plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
 
         # FOM
         print("\n>>> Adaptive MH with FOM:")
         print("\n--- EXPLORATION ---")
         
         t0_FOM = perf_counter()
-        chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings_fom(
-            u_obs=u_obs, theta_0=initial_guess, N=1000, bounds=bounds,
-            surface_idx=surface_idx, temperature=5.0, C_0=initial_cov_expl,
-            n_0=200, s_d=2.4, n_generations=10, h=0.1
+        chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings(
+            generator=FOMgenerator,
+            Q=Q2,
+            mu_0=mu_0,
+            obs=u_obs,
+            N=10000,
+            bounds=bounds,
+            temperature=5.0,
+            C_0=initial_cov_expl,
+            n_0=200,
+            s_d=2.4,
+            nrep=10,
+            h=0.1,
+            verbose=verbose
         )
         t_exp_FOM = perf_counter() - t0_FOM
-        best_guess_FOM = chain_exploration_FOM[-1]
+        best_guess_FOM = chain_exploration_FOM[-1].clone().detach()
         print(f"Exploration Time: {t_exp_FOM:.2f} s - Best Guess: {best_guess_FOM}")
 
         print("\n--- REFINEMENT ---")
-        cov_for_refinement_FOM = cov_learned_FOM + np.eye(2) * 1e-6
+        cov_for_refinement_FOM = cov_learned + torch.eye(2, device=device) * 1e-6
         t1_FOM = perf_counter()
-        chain_refined_FOM, _ = adaptive_metropolis_hastings_fom(
-            u_obs=u_obs, theta_0=best_guess_FOM, N=3000, bounds=bounds,
-            surface_idx=surface_idx, temperature=1.0, C_0=cov_for_refinement_FOM,
-            n_0=0, s_d=0.35, n_generations=25, h=0.03
+        chain_refined_FOM, _ = daptive_metropolis_hastings(
+            generator=FOMgenerator,
+            Q=lambda ufom: ufom[:, surface_idx],
+            mu_0=mu_0,
+            obs=u_obs,
+            N=30000,
+            bounds=bounds,
+            temperature=1.0,
+            C_0=initial_cov_expl,
+            n_0=0,
+            s_d=0.35,
+            nrep=25,
+            h=0.03,
+            verbose=verbose
         )
         t_ref_FOM = perf_counter() - t1_FOM
         print(f">>> FOM\nRefinement Time: {t_ref_FOM:.2f} s")
         
-        plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx, results_dir)
+        plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
         
         # Results
         clean_samples_NF = chain_refined[2000:]
@@ -289,11 +358,11 @@ def main():
         ax_comp.set_ylabel("Delta")
         ax_comp.legend()
         plt.tight_layout()
-        plt.savefig(os.path.join(results_dir, f'posterior_comparison_idx_{test_idx}.png'))
+        plt.savefig(os.path.join(results_dir, f'posterior_comparison_idx_{test_idx[i]}.png'))
         plt.close(fig3)
         
         results_dict = {
-            'test_idx': int(test_idx),
+            'test_idx': int(test_idx[i]),
             'true_mass': float(mu_true_phys[0]),
             'true_delta': float(mu_true_phys[1]),
             'initial_guess': [float(ig) for ig in initial_guess],
@@ -320,10 +389,10 @@ def main():
             'Wasserstein_dist': float(w2_dist)
         }
         
-        with open(os.path.join(results_dir, f'results_idx_{test_idx}.json'), 'w') as f:
+        with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
             json.dump(results_dict, f, indent=4)
             
-        print(f"Results for index {test_idx} saved successfully!\n")
+        print(f"Results for index {test_idx[i]} saved successfully!\n")
 
 if __name__ == "__main__":
     main()
