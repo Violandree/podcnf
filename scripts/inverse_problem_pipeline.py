@@ -215,7 +215,7 @@ def main():
         )
 
         print(f"Index: {test_idx[i]} - True Mass={mu_true_phys[0]:.4f}, True Delta={mu_true_phys[1]:.4f}")
-        print(f"Initial guess: {initial_guess}")
+        print(f"Initial guess: {mu_0}")
 
         # PODCNF
         print(">>> Adaptive MH with PODCNF:")
@@ -228,7 +228,7 @@ def main():
             Q=Q,
             mu_0=mu_0,
             obs=u_obs,
-            N=10000,
+            N=1000,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -250,7 +250,7 @@ def main():
             Q=Q,
             mu_0=best_guess,
             obs=u_obs,
-            N=30000,
+            N=3000,
             bounds=bounds,
             temperature=1.0,
             C_0=cov_for_refinement,
@@ -275,7 +275,7 @@ def main():
             Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
-            N=10000,
+            N=1000,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -297,7 +297,7 @@ def main():
             Q=lambda ufom: ufom[:, surface_idx],
             mu_0=mu_0,
             obs=u_obs,
-            N=30000,
+            N=3000,
             bounds=bounds,
             temperature=1.0,
             C_0=initial_cov_expl,
@@ -367,7 +367,7 @@ def main():
             'test_idx': int(test_idx[i]),
             'true_mass': float(mu_true_phys[0]),
             'true_delta': float(mu_true_phys[1]),
-            'initial_guess': [float(ig) for ig in initial_guess],
+            'initial_guess': [float(ig) for ig in mu_0],
             'NF': {
                 'time_exploration': float(t_exp),
                 'time_refinement': float(t_ref),
