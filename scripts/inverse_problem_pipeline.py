@@ -53,10 +53,10 @@ def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx
 
     # Burn-in e step
     if model_name == "NF":
-        clean_samples = chain_ref#[2000:] da rimbuovere
+        clean_samples = chain_ref[2000:]
         step = 200
     else:
-        clean_samples = chain_ref#[1000:] da rimbuovere
+        clean_samples = chain_ref[1000:]
         step = 20
 
     # TRACE PLOT
@@ -231,7 +231,7 @@ def main():
             Q=Q1,
             mu_0=mu_0,
             obs=u_obs,
-            N=1000, # 10000
+            N=10000,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -253,7 +253,7 @@ def main():
             Q=Q1,
             mu_0=best_guess,
             obs=u_obs,
-            N=3000, # 30000
+            N=30000,
             bounds=bounds,
             temperature=1.0,
             C_0=cov_for_refinement,
@@ -278,7 +278,7 @@ def main():
             Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
-            N=50, # 10000
+            N=10000,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -300,7 +300,7 @@ def main():
             Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
-            N=150, # 30000
+            N=30000,
             bounds=bounds,
             temperature=1.0,
             C_0=cov_for_refinement_FOM,
@@ -316,8 +316,8 @@ def main():
         plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
         
         # Results
-        clean_samples_NF = chain_refined#[2000:]
-        clean_samples_FOM = chain_refined_FOM#[1000:]
+        clean_samples_NF = chain_refined[2000:]
+        clean_samples_FOM = chain_refined_FOM[1000:]
         
         # Performance PODCNF
         mean_mass_NF = torch.mean(clean_samples_NF[:, 0])
