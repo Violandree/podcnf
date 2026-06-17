@@ -205,8 +205,8 @@ def main():
 
     podcnf = PODcnf(V, NF_linear, mu_scaler, c_scaler)
 
-    Nexp = 10
-    Nref = 30
+    Nexp = 10000
+    Nref = 30000
 
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
