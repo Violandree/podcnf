@@ -48,7 +48,7 @@ def FOMgenerator(muj, nrep):
                 device = device)
 
 def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir):
-    full_chain = torch.stack([chain_exp, chain_ref])
+    full_chain = torch.cat([chain_exp, chain_ref])
     split_point = len(chain_exp)
 
     # Burn-in e step
