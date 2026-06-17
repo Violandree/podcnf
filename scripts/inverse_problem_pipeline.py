@@ -320,12 +320,12 @@ def main():
         clean_samples_FOM = chain_refined_FOM#[1000:]
         
         # Performance PODCNF
-        mean_mass_NF = np.mean(clean_samples_NF[:, 0])
-        std_mass_NF = np.std(clean_samples_NF[:, 0])
+        mean_mass_NF = torch.mean(clean_samples_NF[:, 0])
+        std_mass_NF = torch.std(clean_samples_NF[:, 0])
         err_mass_NF = abs(mean_mass_NF - mu_true_phys[0]) / mu_true_phys[0]
 
-        mean_delta_NF = np.mean(clean_samples_NF[:, 1])
-        std_delta_NF = np.std(clean_samples_NF[:, 1])
+        mean_delta_NF = torch.mean(clean_samples_NF[:, 1])
+        std_delta_NF = torch.std(clean_samples_NF[:, 1])
         err_delta_NF = abs(mean_delta_NF - mu_true_phys[1]) / mu_true_phys[1]
 
         # Performance FOM
