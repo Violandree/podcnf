@@ -329,12 +329,12 @@ def main():
         # err_delta_NF = abs(mean_delta_NF - mu_true_phys[1]) / mu_true_phys[1]
 
         # Performance FOM
-        mean_mass_FOM = np.mean(clean_samples_FOM[:, 0])
-        std_mass_FOM = np.std(clean_samples_FOM[:, 0])
+        mean_mass_FOM = torch.mean(clean_samples_FOM[:, 0])
+        std_mass_FOM = torch.std(clean_samples_FOM[:, 0])
         err_mass_FOM = abs(mean_mass_FOM - mu_true_phys[0]) / mu_true_phys[0]
 
-        mean_delta_FOM = np.mean(clean_samples_FOM[:, 1])
-        std_delta_FOM = np.std(clean_samples_FOM[:, 1])
+        mean_delta_FOM = torch.mean(clean_samples_FOM[:, 1])
+        std_delta_FOM = torch.std(clean_samples_FOM[:, 1])
         err_delta_FOM = abs(mean_delta_FOM - mu_true_phys[1]) / mu_true_phys[1]
 
         print("\n--- ERROR METRICS ---")
