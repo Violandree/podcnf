@@ -316,17 +316,17 @@ def main():
         plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
         
         # Results
-        clean_samples_NF = chain_refined[2000:]
-        clean_samples_FOM = chain_refined_FOM[1000:]
+        # clean_samples_NF = chain_refined[2000:]
+        clean_samples_FOM = chain_refined_FOM#[1000:]
         
         # Performance PODCNF
-        mean_mass_NF = np.mean(clean_samples_NF[:, 0])
-        std_mass_NF = np.std(clean_samples_NF[:, 0])
-        err_mass_NF = abs(mean_mass_NF - mu_true_phys[0]) / mu_true_phys[0]
+        # mean_mass_NF = np.mean(clean_samples_NF[:, 0])
+        # std_mass_NF = np.std(clean_samples_NF[:, 0])
+        # err_mass_NF = abs(mean_mass_NF - mu_true_phys[0]) / mu_true_phys[0]
 
-        mean_delta_NF = np.mean(clean_samples_NF[:, 1])
-        std_delta_NF = np.std(clean_samples_NF[:, 1])
-        err_delta_NF = abs(mean_delta_NF - mu_true_phys[1]) / mu_true_phys[1]
+        # mean_delta_NF = np.mean(clean_samples_NF[:, 1])
+        # std_delta_NF = np.std(clean_samples_NF[:, 1])
+        # err_delta_NF = abs(mean_delta_NF - mu_true_phys[1]) / mu_true_phys[1]
 
         # Performance FOM
         mean_mass_FOM = np.mean(clean_samples_FOM[:, 0])
@@ -338,20 +338,20 @@ def main():
         err_delta_FOM = abs(mean_delta_FOM - mu_true_phys[1]) / mu_true_phys[1]
 
         print("\n--- ERROR METRICS ---")
-        print(f"PODCNF - Estimated Mass:  {mean_mass_NF:.4f} +/- {std_mass_NF:.4f} | Rel Error: {err_mass_NF:.4%}")
-        print(f"PODCNF - Estimated Delta: {mean_delta_NF:.4f} +/- {std_delta_NF:.4f} | Rel Error: {err_delta_NF:.4%}")
+        # print(f"PODCNF - Estimated Mass:  {mean_mass_NF:.4f} +/- {std_mass_NF:.4f} | Rel Error: {err_mass_NF:.4%}")
+        # print(f"PODCNF - Estimated Delta: {mean_delta_NF:.4f} +/- {std_delta_NF:.4f} | Rel Error: {err_delta_NF:.4%}")
         print(f"FOM    - Estimated Mass:  {mean_mass_FOM:.4f} +/- {std_mass_FOM:.4f} | Rel Error: {err_mass_FOM:.4%}")
         print(f"FOM    - Estimated Delta: {mean_delta_FOM:.4f} +/- {std_delta_FOM:.4f} | Rel Error: {err_delta_FOM:.4%}")
 
         print("\nCalculating Wasserstein distance:")
         w2_dist = Wasser_dist(
-            torch.tensor(clean_samples_FOM, dtype=torch.float32), 
-            torch.tensor(clean_samples_NF, dtype=torch.float32)
+            torch.tensor(clean_samples_FOM, dtype=torch.float32)
+            # torch.tensor(clean_samples_NF, dtype=torch.float32)
         )
         print(f"Wasserstein Distance (W2): {w2_dist:.4f}")
         
         fig3, ax_comp = plt.subplots(figsize=(7, 5))
-        sns.kdeplot(x=clean_samples_NF[:, 0], y=clean_samples_NF[:, 1], cmap="Blues", fill=True, alpha=0.5)
+        # sns.kdeplot(x=clean_samples_NF[:, 0], y=clean_samples_NF[:, 1], cmap="Blues", fill=True, alpha=0.5)
         sns.kdeplot(x=clean_samples_FOM[:, 0], y=clean_samples_FOM[:, 1], cmap="Oranges", fill=True, alpha=0.5)
         
         ax_comp.plot([], [], color='blue', alpha=0.5, label='NF Posterior')
@@ -371,16 +371,16 @@ def main():
             'true_mass': float(mu_true_phys[0]),
             'true_delta': float(mu_true_phys[1]),
             'initial_guess': [float(ig) for ig in mu_0],
-            'NF': {
-                'time_exploration': float(t_exp),
-                'time_refinement': float(t_ref),
-                'mean_mass': float(mean_mass_NF),
-                'std_mass': float(std_mass_NF),
-                'rel_error_mass': float(err_mass_NF),
-                'mean_delta': float(mean_delta_NF),
-                'std_delta': float(std_delta_NF),
-                'rel_error_delta': float(err_delta_NF)
-            },
+            # 'NF': {
+            #     'time_exploration': float(t_exp),
+            #     'time_refinement': float(t_ref),
+            #     'mean_mass': float(mean_mass_NF),
+            #     'std_mass': float(std_mass_NF),
+            #     'rel_error_mass': float(err_mass_NF),
+            #     'mean_delta': float(mean_delta_NF),
+            #     'std_delta': float(std_delta_NF),
+            #     'rel_error_delta': float(err_delta_NF)
+            # },
             'FOM': {
                 'time_exploration': float(t_exp_FOM),
                 'time_refinement': float(t_ref_FOM),
