@@ -267,6 +267,7 @@ def main():
         print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
         
         plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
+        full_chain_NF = torch.cat([chain_exploration, chain_refined])
 
         # FOM
         print("\n>>> Adaptive MH with FOM:")
@@ -314,6 +315,7 @@ def main():
         print(f">>> FOM\nRefinement Time: {t_ref_FOM:.2f} s")
         
         plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
+        full_chain_FOM = torch.cat([chain_exploration_FOM, chain_refined_FOM])
         
         # Results
         clean_samples_NF = chain_refined[2000:]
@@ -396,6 +398,16 @@ def main():
         
         with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
             json.dump(results_dict, f, indent=4)
+
+        torch.save(
+            full_chain_NF.detach().cpu(), 
+            os.path.join(results_dir, f'chain_NF_idx_{test_idx[i]}.pt')
+        )
+        
+        torch.save(
+            full_chain_FOM.detach().cpu(), 
+            os.path.join(results_dir, f'chain_FOM_idx_{test_idx[i]}.pt')
+        )
             
         print(f"Results for index {test_idx[i]} saved successfully!\n")
 
