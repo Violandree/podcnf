@@ -56,7 +56,7 @@ def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx
         clean_samples = chain_ref[2000:]
         step = 200
     else:
-        clean_samples = chain_ref[1000:]
+        clean_samples = chain_ref#[1000:]
         step = 20
 
     # TRACE PLOT
