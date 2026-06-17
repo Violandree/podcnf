@@ -205,6 +205,9 @@ def main():
 
     podcnf = PODcnf(V, NF_linear, mu_scaler, c_scaler)
 
+    Nexp = 10
+    Nref = 30
+
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
 
@@ -231,7 +234,7 @@ def main():
             Q=Q1,
             mu_0=mu_0,
             obs=u_obs,
-            N=10000,
+            N=Nexp,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -253,7 +256,7 @@ def main():
             Q=Q1,
             mu_0=best_guess,
             obs=u_obs,
-            N=30000,
+            N=Nref,
             bounds=bounds,
             temperature=1.0,
             C_0=cov_for_refinement,
@@ -279,7 +282,7 @@ def main():
             Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
-            N=10000,
+            N=Nexp,
             bounds=bounds,
             temperature=5.0,
             C_0=initial_cov_expl,
@@ -301,7 +304,7 @@ def main():
             Q=Q2,
             mu_0=mu_0,
             obs=u_obs,
-            N=30000,
+            N=Nref,
             bounds=bounds,
             temperature=1.0,
             C_0=cov_for_refinement_FOM,
@@ -399,14 +402,14 @@ def main():
         with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
             json.dump(results_dict, f, indent=4)
 
-        torch.save(
-            full_chain_NF.detach().cpu(), 
-            os.path.join(results_dir, f'chain_NF_idx_{test_idx[i]}.pt')
+        np.save(
+            os.path.join(results_dir, f'chain_NF_idx_{test_idx[i]}.npy'),
+            full_chain_NF.detach().cpu().numpy()
         )
         
-        torch.save(
-            full_chain_FOM.detach().cpu(), 
-            os.path.join(results_dir, f'chain_FOM_idx_{test_idx[i]}.pt')
+        np.save(
+            os.path.join(results_dir, f'chain_FOM_idx_{test_idx[i]}.npy'),
+            full_chain_FOM.detach().cpu().numpy()
         )
             
         print(f"Results for index {test_idx[i]} saved successfully!\n")
