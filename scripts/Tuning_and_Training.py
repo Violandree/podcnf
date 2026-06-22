@@ -63,7 +63,7 @@ def main(u, mu):
             BATCH_SIZE=batch_size, norm_scaler=True, drop_last=False
         )
 
-    DO_TUNING = True
+    DO_TUNING = False
 
     if DO_TUNING:
         print("\nTuning Hyperparameters...")
@@ -151,7 +151,7 @@ def main(u, mu):
 if __name__ == "__main__":
 
     # Here one should upload the data and the conditioning parameters
-    input_file = "data/stokes_data_6400.pt"
+    input_file = "../data/stokes_data_6400.pt"
     print(f"\nLoading data from {input_file}...")
     dataset = torch.load(input_file, weights_only=True)
 

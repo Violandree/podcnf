@@ -25,6 +25,8 @@ def main():
     # Elastic
     mass = dataset['mass']
     delta = dataset['delta']
+
+    # One should upload mu and u by himself as Tensor
     mu = torch.cat((mass, delta), dim = 1)
     u = dataset['u_data']
 

@@ -4,11 +4,12 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from typing import Tuple, Union, Optional, Any
+
+from podcnf.roms import TorchScaler
 
 SEED = 42
 
-def seed_worker(worker_id: int) -> int:
+def seed_worker(worker_id):
     """
     Initialization of the seed for each worker of the DataLoader to
     ensure the reproducibility of the experiments.
@@ -16,20 +17,6 @@ def seed_worker(worker_id: int) -> int:
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
-
-class PODCNFdataset(Dataset):
-    """
-    Combine conditioning parameter and data.
-    """
-
-    def __init__(self, mu: torch.Tensor, c: torch.Tensor) -> None:
-        self.data = torch.cat((mu, c), axis=1)
-
-    def __len__(self) -> int:
-        return self.data.shape[0]
-
-    def __getitem__(self, idx: int) -> torch.Tensor:
-        return self.data[idx]
 
 def make_loader(ds: Dataset, 
                 batch_size: int, 
@@ -63,57 +50,32 @@ def make_loader(ds: Dataset,
 
 def LoadData(mu, c, 
             n_train, n_val, 
-            BATCH_SIZE, 
-            norm_scaler=None, 
+            BATCH_SIZE,  
             drop_last=False):
     """
     Normalization of the data, it returns directly the data normalized given the
-    parameters mu and the solution c if norm_scaler!=None, otherwise it returns
-    simply the data_loader.
-    - norm_scaler==True: Standard Normalization
-    - norm_scaler==False: MinMax Normalization
+    parameters mu and the solution c.
     """
-
-    if isinstance(mu, np.ndarray):
-        mu = torch.tensor(mu, dtype=torch.float32)
-    if isinstance(c, np.ndarray):
-        c = torch.tensor(c, dtype=torch.float32)
 
     # Divide the dataset in training, validation and test set - over c and not u
     mu_train, c_train = mu[:n_train, :], c[:n_train, :]
     mu_val, c_val = mu[n_train:n_val, :], c[n_train:n_val, :]
     mu_test, c_test = mu[n_val:, :], c[n_val:, :]
 
-    if norm_scaler is None:
-        data_train = torch.cat((mu_train, c_train), axis=1)
-        data_val = torch.cat((mu_val, c_val), axis=1)
-        data_test = torch.cat((mu_test, c_test), axis=1)
+    mean_mu, scale_mu = mu_train.mean(dim = 0), torch.sqrt(mu_train.var(dim = 0))
+    mean_c, scale_c = c_train.mean(dim = 0), torch.sqrt(c_train.var(dim = 0))
 
-        # Building the dataset
-        train_loader = make_loader(data_train, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
-        val_loader = make_loader(data_val, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
-        test_loader = make_loader(data_test, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
+    mu_scaler = TorchScaler(mean_mu, scale_mu, mu.device)
+    c_scaler = TorchScaler(mean_c, scale_c, c.device)
 
-        return train_loader, val_loader, test_loader
+    mu_train_scaled = mu_scaler.transform(mu_train)
+    c_train_scaled = c_scaler.transform(c_train)
 
-    if norm_scaler is True:
-        mu_scaler = StandardScaler()
-        c_scaler = StandardScaler()
-    else:
-        mu_scaler = MinMaxScaler()
-        c_scaler = MinMaxScaler()
+    mu_val_scaled = mu_scaler.transform(mu_val)
+    c_val_scaled = c_scaler.transform(c_val)
 
-    mu_scaler.fit(mu_train)
-    c_scaler.fit(c_train)
-
-    mu_train_scaled = torch.tensor(mu_scaler.transform(mu_train), dtype=torch.float32)
-    c_train_scaled = torch.tensor(c_scaler.transform(c_train), dtype=torch.float32)
-
-    mu_val_scaled = torch.tensor(mu_scaler.transform(mu_val), dtype=torch.float32)
-    c_val_scaled = torch.tensor(c_scaler.transform(c_val), dtype=torch.float32)
-
-    mu_test_scaled = torch.tensor(mu_scaler.transform(mu_test), dtype=torch.float32)
-    c_test_scaled = torch.tensor(c_scaler.transform(c_test), dtype=torch.float32)
+    mu_test_scaled = mu_scaler.transform(mu_test)
+    c_test_scaled = c_scaler.transform(c_test)
 
     # Combine parameters and solution c
     data_train_scaled = torch.cat((mu_train_scaled, c_train_scaled), axis=1)
