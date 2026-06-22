@@ -11,8 +11,8 @@ from dlroms import euclidean
 
 class TorchScaler(object):
     def __init__(self, vmean, scale):
-        self.vmean = vmean.detach().copy()
-        self.scale = scale.detach().copy()
+        self.vmean = vmean.detach().clone()
+        self.scale = scale.detach().clone()
     def inverse_transform(self, x):
         return x*self.scale + self.vmean
     def transform(self, xtilde):

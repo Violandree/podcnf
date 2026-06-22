@@ -18,7 +18,7 @@ def seed_worker(worker_id):
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
-def make_loader(ds: Dataset, 
+def make_data(ds: Dataset, 
                 batch_size: int, 
                 shuffle: bool =True, drop_last: bool = True) -> DataLoader:
     """
@@ -48,7 +48,7 @@ def make_loader(ds: Dataset,
     )
 
 
-def LoadData(mu, c, 
+def DataPreprocessing(mu, c, 
             n_train, n_val, 
             BATCH_SIZE,  
             drop_last=False):
@@ -65,8 +65,8 @@ def LoadData(mu, c,
     mean_mu, scale_mu = mu_train.mean(dim = 0), torch.sqrt(mu_train.var(dim = 0))
     mean_c, scale_c = c_train.mean(dim = 0), torch.sqrt(c_train.var(dim = 0))
 
-    mu_scaler = TorchScaler(mean_mu, scale_mu, mu.device)
-    c_scaler = TorchScaler(mean_c, scale_c, c.device)
+    mu_scaler = TorchScaler(mean_mu, scale_mu)
+    c_scaler = TorchScaler(mean_c, scale_c)
 
     mu_train_scaled = mu_scaler.transform(mu_train)
     c_train_scaled = c_scaler.transform(c_train)
@@ -83,8 +83,8 @@ def LoadData(mu, c,
     data_test_scaled = torch.cat((mu_test_scaled, c_test_scaled), axis=1)
 
     # Building the dataset
-    train_loader = make_loader(data_train_scaled, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
-    val_loader = make_loader(data_val_scaled, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
-    test_loader = make_loader(data_test_scaled, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
+    train_data = make_data(data_train_scaled, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
+    val_data = make_data(data_val_scaled, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
+    test_data = make_data(data_test_scaled, batch_size=BATCH_SIZE, shuffle=False, drop_last=False)
 
-    return train_loader, val_loader, test_loader, mu_scaler, c_scaler
+    return train_data, val_data, test_data, mu_scaler, c_scaler
