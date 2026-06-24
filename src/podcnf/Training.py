@@ -6,10 +6,11 @@ from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from podcnf.NFmodel import NormalizingFlow
 
 import matplotlib.pyplot as plt
 from IPython.display import clear_output
+
+# from podcnf.NFmodel import NormalizingFlow
 
 def train_one_epoch(model, train_loader, optimizer, device):
     """
@@ -111,7 +112,7 @@ def full_train(epochs, print_frequency,
 
     optimizer = torch.optim.Adam(model.parameters(),
                                  lr=lr,
-                                 weight_decay=weight_decay) # prva anche con 1e-4, 1e-5, 1e-6
+                                 weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=patience//2) # DA VEDERE
 
     # Initialization early stopping
@@ -219,7 +220,6 @@ def tuning_parameters(train_loader, val_loader,
         hidden_depth = params['hidden_depth']
         w_d = params['weight_decay']
 
-        # This name will appear in tensorboard to monitor it
         run_name = f"run_{i+1}_flows_{num_flows}_hidden_{hidden_size}_depth_{hidden_depth}_lr_{lr}_wd_{w_d}"
         print(f"\n--- Execution {i+1}/{len(hyperparam_combinations)}: {run_name} ---")
 
@@ -228,6 +228,7 @@ def tuning_parameters(train_loader, val_loader,
         optimizer = torch.optim.AdamW(flow.parameters(),
                                      lr=lr,
                                      weight_decay=w_d)
+
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.1, patience=10) # DA VEDERE
 
         current_run_best_val_loss = float('inf')

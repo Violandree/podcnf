@@ -1,18 +1,29 @@
 # Developing a class structure to generate samples
+import os
 import torch
 import numpy as np
 
 from scipy.linalg import svd
 from dlroms.dnns import num2p
 
+from podcnf.NFmodel import NormalizingFlow
 from podcnf.Visualization import svdplot
 
 from dlroms import euclidean
 
 class TorchScaler(object):
     def __init__(self, vmean, scale):
-        self.vmean = vmean.detach().clone()
-        self.scale = scale.detach().clone()
+        self.__vmean = vmean.detach().clone()
+        self.__scale = scale.detach().clone()
+
+    @property
+    def vmean(self):
+        return self.__vmean
+
+    @property
+    def scale(self):
+        return self.__scale
+
     def inverse_transform(self, x):
         return x*self.scale + self.vmean
     def transform(self, xtilde):
@@ -91,4 +102,40 @@ class PODcnf(GenerativeROM):
         
         return np.linalg.norm(u - u @ V @ V.T, axis = 1)
 
+    def save(self, filepath, flow_parameters = None):
         
+        checkpoint = {
+            'Vpod': self.V,
+            'flow_dict': self.cnf.state_dict(),
+            'mu_scaler': self.mu_scaler,
+            'c_scaler': self.c_scaler,
+            'num_flows': flow_parameters['num_flows'],
+            'hidden_size': flow_parameters['hidden_size'],
+            'hidden_depth': flow_parameters['hidden_depth']
+        }
+
+        torch.save(checkpoint, filepath)
+            
+
+    @staticmethod
+    def load(filepath):
+
+        loaded_checkpoint = torch.load(filepath, weights_only=False)
+
+        Vpod = loaded_checkpoint['Vpod']
+        flow_dict = loaded_checkpoint['flow_dict']
+        mu_scaler = loaded_checkpoint['mu_scaler']
+        c_scaler = loaded_checkpoint['c_scaler']
+        num_flows = loaded_checkpoint['num_flows']
+        hidden_size = loaded_checkpoint['hidden_size']
+        hidden_depth = loaded_checkpoint['hidden_depth']
+
+        dim_mu = mu_scaler.vmean.shape[0]
+        dim_c = c_scaler.vmean.shape[0]
+
+        device = mu_scaler.vmean.device
+
+        flow = NormalizingFlow(dim_mu, dim_c, num_flows, hidden_size, hidden_depth, device)
+        flow.load_state_dict(flow_dict)
+
+        return PODcnf(Vpod, flow, mu_scaler, c_scaler)
