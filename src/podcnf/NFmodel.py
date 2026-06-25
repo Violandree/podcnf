@@ -152,7 +152,7 @@ class NormalizingFlow(nn.Module):
 
     def train_flow(self, epochs, print_frequency, train_data, val_data, lr, weight_decay, patience, model_save_path, show_plot=False, tuning = False):
 
-        device = train_data.dataset.device
+        device = next(self.parameters()).device
 
         print(f"Training {epochs} epochs:")
 
@@ -175,6 +175,10 @@ class NormalizingFlow(nn.Module):
             train_loss = train_one_epoch(
                 self, train_data, optimizer, device
                 )
+
+            if train_loss == float('inf'):
+                print(f"Epoch {epoch}: Training diverged. Stopping this run.")
+                break
 
             # Evaluate self on validation data without updating weights
             val_loss = validate_one_epoch(
@@ -250,7 +254,7 @@ class NormalizingFlow(nn.Module):
             - lr, num_flows, hidden_size: lists of possible value for the hyperparameters
         """
 
-        device = train_data.dataset.device
+        device = next(self.parameters()).device
 
         # Test a sufficient number of parameters
         param_grid = {
