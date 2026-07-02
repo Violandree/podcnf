@@ -5,7 +5,7 @@
 data/
 
 # No need it notebooks
-notebooks/
+notebooks/*
 !notebooks/LibraryExplanation.ipynb
 
 # Results
