@@ -117,6 +117,16 @@ class NormalizingFlow(nn.Module):
         log_px = log_pz + ldj
         return log_px
 
+    def log_likelihoods(self, mu, c):
+    
+        self.eval()
+        with torch.no_grad():
+            loglikelihoods = [
+                self.log_prob(mu_i.unsqueeze(0), c_i.unsqueeze(0)) for mu_i, c_i in zip(mu, c)
+            ]
+
+        return torch.tensor(loglikelihoods)
+
     # In the sample function we could pass also just one single value, the fact
     # is that each time we try to evaluate in x0 we obtain a different value due
     # to z that is randomly chosen each time
@@ -254,7 +264,7 @@ class NormalizingFlow(nn.Module):
             - lr, num_flows, hidden_size: lists of possible value for the hyperparameters
         """
 
-        device = next(self.parameters()).device
+        device = train_data.dataset.device
 
         # Test a sufficient number of parameters
         param_grid = {

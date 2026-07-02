@@ -120,7 +120,7 @@ class PODcnf(GenerativeROM):
     @staticmethod
     def load(filepath):
 
-        loaded_checkpoint = torch.load(filepath, weights_only=False)
+        loaded_checkpoint = torch.load(filepath, weights_only=False, map_location=torch.device('cpu'))
 
         Vpod = loaded_checkpoint['Vpod']
         flow_dict = loaded_checkpoint['flow_dict']

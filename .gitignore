@@ -4,6 +4,10 @@
 # Datasets
 data/
 
+# No need it notebooks
+notebooks/
+!notebooks/LibraryExplanation.ipynb
+
 # Results
 results/
 
@@ -12,9 +16,6 @@ results/
 checkpoints/
 *.pt
 *.pth
-
-# Training Logs
-tensorboard_logs/
 
 # Python Cache
 __pycache__/
