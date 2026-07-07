@@ -81,6 +81,9 @@ class NormalizingFlow(nn.Module):
         self.dim_x = dim_x
         self.dim_y = dim_y
         self.device = device
+        self.hidden_size = hidden_size
+        self.hidden_depth = hidden_depth
+        self.num_flows = num_flows
 
         self.flows = nn.ModuleList([
             CouplingLayer(dim_x, dim_y, hidden_size, hidden_depth) for _ in range(num_flows)
@@ -117,12 +120,12 @@ class NormalizingFlow(nn.Module):
         log_px = log_pz + ldj
         return log_px
 
-    def log_likelihoods(self, mu, c):
+    def log_likelihoods(self, x, y):
     
         self.eval()
         with torch.no_grad():
             loglikelihoods = [
-                self.log_prob(mu_i.unsqueeze(0), c_i.unsqueeze(0)) for mu_i, c_i in zip(mu, c)
+                self.log_prob(x_i.unsqueeze(0), y_i.unsqueeze(0)) for x_i, y_i in zip(x,y)
             ]
 
         return torch.tensor(loglikelihoods)
@@ -206,6 +209,8 @@ class NormalizingFlow(nn.Module):
                 plt.figure(figsize=(10, 5))
                 plt.plot(range(1, epoch + 1), train_losses, label='Train Loss', color='blue')
                 plt.plot(range(1, epoch + 1), val_losses, label='Val Loss', color='orange')
+                # plt.semilogy(range(1, epoch + 1), train_losses, label='Train Loss', color='blue')
+                # plt.semilogy(range(1, epoch + 1), val_losses, label='Val Loss', color='orange')
                 plt.xlabel('Epochs')
                 plt.ylabel('Loss')
                 plt.title('Training and Validation Loss Progress')

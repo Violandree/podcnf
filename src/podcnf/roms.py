@@ -71,7 +71,11 @@ class PODcnf(GenerativeROM):
         return self.c_scaler.inverse_transform(self.cnf.sample_same_mu(self.mu_scaler.transform(muj), nrep))
 
     def decode(self, c):
-        return c @ self.V.T    
+        return c @ self.V.T   
+
+    def coef_Log_Likelihood(self, mu, c):
+        sigma_det = self.c_scaler.scale.log().sum()
+        return self.cnf.log_likelihoods(mu, c) - sigma_det
 
     @staticmethod
     def svd(u):
@@ -81,8 +85,9 @@ class PODcnf(GenerativeROM):
             input: u Torch.tensor
             output: projection matrix V and singular values s
         """
-        V, s, _ = svd(u, full_matrices = False)
-        return V, s
+        V, s, _ = svd(u.cpu(), full_matrices = False)
+        dv = u.device
+        return torch.tensor(V, device = dv), s
 
     @staticmethod
     def svdplot(svalues, nmax = 50, logscale = True):
@@ -98,20 +103,20 @@ class PODcnf(GenerativeROM):
     def projection_errors(u, V, relative = True, norm = euclidean):
 
         if relative:
-            return np.linalg.norm(u - u @ V @ V.T, axis = 1)/np.linalg.norm(u, axis = 1)
+            return norm(u - u @ V @ V.T)/norm(u)
         
-        return np.linalg.norm(u - u @ V @ V.T, axis = 1)
+        return norm(u - u @ V @ V.T)
 
-    def save(self, filepath, flow_parameters = None):
+    def save(self, filepath):
         
         checkpoint = {
             'Vpod': self.V,
             'flow_dict': self.cnf.state_dict(),
             'mu_scaler': self.mu_scaler,
             'c_scaler': self.c_scaler,
-            'num_flows': flow_parameters['num_flows'],
-            'hidden_size': flow_parameters['hidden_size'],
-            'hidden_depth': flow_parameters['hidden_depth']
+            'num_flows': self.cnf.num_flows,
+            'hidden_size': self.cnf.hidden_size,
+            'hidden_depth': self.cnf.hidden_depth
         }
 
         torch.save(checkpoint, filepath)

@@ -10,12 +10,10 @@ def svdplot(svalues, nmax=50, logscale=True):
     fig, ax = plt.subplots()
 
     if logscale:
-        ax.plot(np.log(1 - cum_energy[:nmax]), color = 'red')
-        ax.set_title("Log-Cumulative Energy")
-        ax.set_ylabel("LogCumEnergy")
+        ax.semilogy(1 - cum_energy[:nmax], color = 'red')
     else:
-        ax.plot(cum_energy[:nmax], color = 'red')
-        ax.set_title("Cumulative Energy")
-        ax.set_ylabel("CumEnergy")
-
+        ax.plot(1 - cum_energy[:nmax], color = 'red')
+    ax.set_title("Residual Energy")
+    ax.set_ylabel("CumEnergy")
+    ax.grid()
     ax.set_xlabel("nBasis")

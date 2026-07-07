@@ -83,34 +83,33 @@ def stokes(mesh, inflows, outflows, source=[0.0, 0.0]):
     b = b[indexes].reshape(-1)
     return b
 
-if FENICS_AVAILALBE:
-    domain = fe.rectangle((0, 0), (3, 2)) - fe.circle((0.95, 0.7), 0.25) - fe.circle((1.5, 1.35), 0.25) - fe.circle((2.05, 0.7), 0.25)
-    mesh = fe.mesh(domain, stepsize=0.05)
+domain = fe.rectangle((0, 0), (3, 2)) - fe.circle((0.95, 0.7), 0.25) - fe.circle((1.5, 1.35), 0.25) - fe.circle((2.05, 0.7), 0.25)
+mesh = fe.mesh(domain, stepsize=0.05)
 
-    left = lambda x: x[0] < 1e-6
-    right = lambda x: 3 - x[0] < 1e-12
-    circle = lambda x0, r: (lambda x: ((x[0]-x0[0])**2 + (x[1]-x0[1])**2)**0.5 < r + 1e-3)
+left = lambda x: x[0] < 1e-6
+right = lambda x: 3 - x[0] < 1e-12
+circle = lambda x0, r: (lambda x: ((x[0]-x0[0])**2 + (x[1]-x0[1])**2)**0.5 < r + 1e-3)
 
-    def inflows(b0x, b0y, b1, b2, b3):
-        return [
-            [left, lambda x: [b0x*np.exp(-25*(x[1]-1)**2), b0y*np.exp(-25*(x[1]-1)**2)]],
-            [circle((0.95, 0.70), 0.25), lambda x: [b1*(-x[1]+0.70), b1*(x[0]-0.95)]],
-            [circle((1.50, 1.35), 0.25), lambda x: [b2*(-x[1]+1.35), b2*(x[0]-1.50)]],
-            [circle((2.05, 0.70), 0.25), lambda x: [b3*(-x[1]+0.70), b3*(x[0]-2.05)]]
-        ]
+def inflows(b0x, b0y, b1, b2, b3):
+    return [
+        [left, lambda x: [b0x*np.exp(-25*(x[1]-1)**2), b0y*np.exp(-25*(x[1]-1)**2)]],
+        [circle((0.95, 0.70), 0.25), lambda x: [b1*(-x[1]+0.70), b1*(x[0]-0.95)]],
+        [circle((1.50, 1.35), 0.25), lambda x: [b2*(-x[1]+1.35), b2*(x[0]-1.50)]],
+        [circle((2.05, 0.70), 0.25), lambda x: [b3*(-x[1]+0.70), b3*(x[0]-2.05)]]
+    ]
 
-    outflows = [right]
+outflows = [right]
 
-    def bi(i):
-        e = np.zeros(5)
-        e[i] = 1
-        return stokes(mesh, inflows(*e), outflows)
+def bi(i):
+    e = np.zeros(5)
+    e[i] = 1
+    return stokes(mesh, inflows(*e), outflows)
 
-    # Calcolo immediato all'importazione
-    b0x, b0y, b1, b2, b3 = [bi(i) for i in range(5)]
-    Vh = fe.space(mesh, 'CG', 1)
-    Vb = fe.space(mesh, 'CG', 1, vector_valued=True)
-    clc()
+# Calcolo immediato all'importazione
+b0x, b0y, b1, b2, b3 = [bi(i) for i in range(5)]
+Vh = fe.space(mesh, 'CG', 1)
+Vb = fe.space(mesh, 'CG', 1, vector_valued=True)
+clc()
 
 def ADR(eps, theta, c1, c2, c3):
     check_fenics()
