@@ -73,9 +73,11 @@ class PODcnf(GenerativeROM):
     def decode(self, c):
         return c @ self.V.T   
 
-    def coef_Log_Likelihood(self, mu, c):
+    def coef_Log_Likelihood(self, mu, u):
         sigma_det = self.c_scaler.scale.log().sum()
-        return self.cnf.log_likelihoods(mu, c) - sigma_det
+        mu_scaled = self.mu_scaler.transform(mu)
+        c_scaled = self.c_scaler.transform(u @ self.__V)
+        return self.cnf.log_likelihoods(mu_scaled, c_scaled) - sigma_det
 
     @staticmethod
     def svd(u):

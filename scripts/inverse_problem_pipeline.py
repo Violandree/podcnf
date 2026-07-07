@@ -118,61 +118,15 @@ def main():
     results_dir = os.path.join("inverse_results")
     os.makedirs(results_dir, exist_ok=True)
 
-    # Load model
-    MODEL_NAME = os.path.join(target_folder, 'MODEL_64_NEW.pth')
-    if not os.path.exists(MODEL_NAME):
-        gdown.download(id="1Mv9opjkEMDQaLBQx07Fqvh_ItyefLsCl", quiet=True, output=MODEL_NAME)
-    loaded_model = torch.load(MODEL_NAME, map_location=device)
-
     # Load reduced data
-    reduced_input_file = os.path.join(target_folder_data, "elastic_data_reduced_6400.pt")
-    if not os.path.exists(reduced_input_file):
-        gdown.download(id="1FX_9MQ1gAG4Xqyo3HGoGW0Tvokuouqdq", quiet=True, output=reduced_input_file)
-    reduced_dataset = torch.load(reduced_input_file, map_location=device, weights_only=True)
-    mu = reduced_dataset['mu']
-    c = reduced_dataset['c']
+    tets_data_file = 'test_data.pt'
+    data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=tets_data_file)
+    test_data = torch.load(data_download_path, map_location=device, weights_only=True)
 
-    # Load raw data
-    raw_data_file = os.path.join(target_folder_data, "data_linear_density_2pi.pt")
-    if not os.path.exists(raw_data_file):
-        gdown.download(id="1NYiXCqCNLhB87o3OlAav6YfiAO9qoBnM", quiet=True, output=raw_data_file)
-    loaded_data = torch.load(raw_data_file, map_location=device)
-    u = loaded_data['u_data']
+    mu = test_data['mu_test']
+    u = test_data['u_test']
 
-    # c_scaler and mu_scaler
-    c_scaler_path = os.path.join(target_folder, "c_scaler.pkl")
-    if not os.path.exists(c_scaler_path):
-        gdown.download(id="12XBewDNM8SSwPoJxmUuXjUXD3kC3lFBr", quiet=True, output=c_scaler_path)
-    with open(c_scaler_path, "rb") as file:
-        c_scal = pickle.load(file)
-
-    c_scaler = TorchScaler(c_scal.mean_, c_scal.scale_, device)
-
-    mu_scaler_path = os.path.join(target_folder, "mu_scaler.pkl")
-    if not os.path.exists(mu_scaler_path):
-        gdown.download(id="1R2u27onqNzsbkvHPWFlrmRuzXyGod_NJ", quiet=True, output=mu_scaler_path)
-    with open(mu_scaler_path, "rb") as file:
-        mu_scal = pickle.load(file)
-
-    mu_scaler = TorchScaler(mu_scal.mean_, mu_scal.scale_, device)
-
-    # V_POD
-    V_file = os.path.join(target_folder, "V_POD_matrix.pt")
-    if not os.path.exists(V_file):
-        gdown.download(id="1k0WgaeP4hXHJEwOd8Ng9Tv7Pbi2iSa9g", quiet=True, output=V_file)
-    V = torch.load(V_file, map_location=device, weights_only=False)
-
-    dim_x = mu.shape[1]
-    dim_y = c.shape[1]
-
-    # Load Normalizing Flow
-    num_flows = 16
-    hidden_size = 256
-    hidden_depth = 2
-
-    NF_linear = NormalizingFlow(dim_x, dim_y, num_flows, hidden_size, hidden_depth, device).to(device)
-    NF_linear.load_state_dict(loaded_model)
-
+    n_samples = mu.shape[0]
     num_sensors = 31
     sur = [0,1] # top-left already added
 
@@ -183,27 +137,28 @@ def main():
     surface_idx = np.array(sur)
     print(f"Number of sensors on the surface: {len(surface_idx)}")
     u_surface_sensor = u[:, surface_idx] 
-    print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")   
+    print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")
 
     n_simulations = 1
-    n_samples = mu.shape[0]
-    n_val = 6081
 
     bounds = {
         'm_min': 1.0, 'm_max': 2.0,
         'd_min': 0.05, 'd_max': 0.25
     }
 
+    verbose = True
+
+    model_name = "elasticPODcnf.pt"
+    downloaded_path = gdown.download(id="1M7Dx3tKViTRwUkbzoG1mMcMjUWnRmc8v", quiet=True, output=model_name)
+    loaded_rom = PODcnf.load(downloaded_path)
+
+    V = loaded_rom.V
     V_sensors = V[surface_idx, :].to(device)
 
     Q1 = lambda c: c @ V_sensors.T # For generative model
     Q2 = lambda ufom: ufom[:, surface_idx] # For Full Order Modell
 
-    test_idx = random.sample(range(n_val, n_samples + 1), n_simulations)
-
-    verbose = True
-
-    podcnf = PODcnf(V, NF_linear, mu_scaler, c_scaler)
+    test_idx = np.random.randint(0, n_samples-1, n_simulations)
 
     Nexp = 10000
     Nref = 30000
@@ -230,7 +185,7 @@ def main():
 
         t0 = perf_counter()
         chain_exploration, cov_learned = adaptive_metropolis_hastings(
-            generator=podcnf.sample_latent_same_mu,
+            generator=loaded_rom.sample_latent_same_mu,
             Q=Q1,
             mu_0=mu_0,
             obs=u_obs,
@@ -252,7 +207,7 @@ def main():
         cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
         t1 = perf_counter()
         chain_refined, cov_refined = adaptive_metropolis_hastings(
-            generator=podcnf.sample_latent_same_mu,
+            generator=loaded_rom.sample_latent_same_mu,
             Q=Q1,
             mu_0=best_guess,
             obs=u_obs,
