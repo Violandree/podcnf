@@ -125,14 +125,20 @@ class PODcnf(GenerativeROM):
             
 
     @staticmethod
-    def load(filepath, device = torch.device('cpu')):
+    def load(filepath, device=torch.device('cpu')):
 
         loaded_checkpoint = torch.load(filepath, weights_only=False, map_location=device)
 
-        Vpod = loaded_checkpoint['Vpod']
+        Vpod = loaded_checkpoint['Vpod'].to(device)
         flow_dict = loaded_checkpoint['flow_dict']
         mu_scaler = loaded_checkpoint['mu_scaler']
         c_scaler = loaded_checkpoint['c_scaler']
+        
+        mu_scaler._TorchScaler__vmean = mu_scaler.vmean.to(device)
+        mu_scaler._TorchScaler__scale = mu_scaler.scale.to(device)
+        c_scaler._TorchScaler__vmean = c_scaler.vmean.to(device)
+        c_scaler._TorchScaler__scale = c_scaler.scale.to(device)
+
         num_flows = loaded_checkpoint['num_flows']
         hidden_size = loaded_checkpoint['hidden_size']
         hidden_depth = loaded_checkpoint['hidden_depth']
@@ -142,5 +148,7 @@ class PODcnf(GenerativeROM):
 
         flow = NormalizingFlow(dim_mu, dim_c, num_flows, hidden_size, hidden_depth, device)
         flow.load_state_dict(flow_dict)
+        
+        flow.to(device)
 
         return PODcnf(Vpod, flow, mu_scaler, c_scaler)
