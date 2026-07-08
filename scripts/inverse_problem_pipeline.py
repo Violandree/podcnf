@@ -44,8 +44,7 @@ def FOMgenerator(muj, nrep):
   else:
     mu0 = muj
   return torch.tensor(np.stack([FOMsampler(j, *mu0, option = 1)[-2] for j in range(nrep)],
-                               axis = 0), 
-                device = device)
+                               axis = 0), device = device)
 
 def plot_trace(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir):
     full_chain = torch.cat([chain_exp, chain_ref])
@@ -281,7 +280,7 @@ def main():
         t_ref_FOM = perf_counter() - t1_FOM
         print(f">>> FOM\nRefinement Time: {t_ref_FOM:.2f} s")
         
-        plot_trace_and_posterior(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
+        plot_trace(chain_exploration_FOM, chain_refined_FOM, mu_true_phys, "FOM", test_idx[i], results_dir)
         full_chain_FOM = torch.cat([chain_exploration_FOM, chain_refined_FOM])
         
         # Results

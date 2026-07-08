@@ -108,5 +108,5 @@ def adaptive_metropolis_hastings(
 
     if verbose:
       acc_rate = accepted_count / N
-      print(f"\nAccpetamce Rate: {acc_rate:.2%}")
+      print(f"\nAcceptance Rate: {acc_rate:.2%}")
     return chain, C_n
