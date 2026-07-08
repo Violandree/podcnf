@@ -125,9 +125,9 @@ class PODcnf(GenerativeROM):
             
 
     @staticmethod
-    def load(filepath):
+    def load(filepath, device = torch.device('cpu')):
 
-        loaded_checkpoint = torch.load(filepath, weights_only=False, map_location=torch.device('cpu'))
+        loaded_checkpoint = torch.load(filepath, weights_only=False, map_location=device)
 
         Vpod = loaded_checkpoint['Vpod']
         flow_dict = loaded_checkpoint['flow_dict']
@@ -139,8 +139,6 @@ class PODcnf(GenerativeROM):
 
         dim_mu = mu_scaler.vmean.shape[0]
         dim_c = c_scaler.vmean.shape[0]
-
-        device = torch.device('cuda')
 
         flow = NormalizingFlow(dim_mu, dim_c, num_flows, hidden_size, hidden_depth, device)
         flow.load_state_dict(flow_dict)
