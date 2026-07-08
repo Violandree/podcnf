@@ -140,7 +140,7 @@ class PODcnf(GenerativeROM):
         dim_mu = mu_scaler.vmean.shape[0]
         dim_c = c_scaler.vmean.shape[0]
 
-        device = mu_scaler.vmean.device
+        device = torch.device('cuda')
 
         flow = NormalizingFlow(dim_mu, dim_c, num_flows, hidden_size, hidden_depth, device)
         flow.load_state_dict(flow_dict)
