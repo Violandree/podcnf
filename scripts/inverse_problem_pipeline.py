@@ -3,6 +3,7 @@ import gdown
 import numpy as np
 from time import perf_counter
 import random
+import json
 
 import torch
 
@@ -71,7 +72,7 @@ def main():
     u_surface_sensor = u[:, surface_idx] 
     print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")
 
-    n_simulations = 1
+    n_simulations = 2
 
     bounds = {
         'm_min': 1.0, 'm_max': 2.0,
@@ -88,8 +89,8 @@ def main():
 
     test_idx = np.random.randint(0, n_samples-1, n_simulations)
 
-    Nexp = 50
-    Nref = 150
+    Nexp = 10000
+    Nref = 30000
 
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
@@ -212,7 +213,7 @@ def main():
         )
 
         results_dict = {
-        'test_idx': int(test_idx),
+        'test_idx': int(test_idx[i]),
         'true_mass': float(mu_true_phys[0]),
         'true_delta': float(mu_true_phys[1]),
         'initial_guess': [float(ig) for ig in mu_0],
@@ -226,7 +227,7 @@ def main():
         }
     }
     
-    with open(os.path.join(results_dir, f'results_idx_{test_idx}.json'), 'w') as f:
+    with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
         json.dump(results_dict, f, indent=4)
         
         print(f"Results for index {test_idx[i]} saved successfully!\n")

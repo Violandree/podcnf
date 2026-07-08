@@ -17,10 +17,10 @@ def plot_trace(full_chain, mu_true, model_name, test_idx, results_dir):
 
     # Burn-in e step
     if model_name == "NF":
-        clean_samples = full_chain#[12000:]
+        clean_samples = full_chain[12000:]
         step = 200
     else:
-        clean_samples = full_chain#[11000:]
+        clean_samples = full_chain[11000:]
         step = 20
 
     # TRACE PLOT
@@ -107,8 +107,8 @@ def main():
     full_chain_FOM = np.load(FOM_chain_name)
 
     # Results
-    clean_samples_NF = full_chain#[2000:]
-    clean_samples_FOM = full_chain_FOM#[1000:]
+    clean_samples_NF = full_chain[2000:]
+    clean_samples_FOM = full_chain_FOM[1000:]
 
     nf_np = clean_samples_NF.cpu().numpy() if isinstance(clean_samples_NF, torch.Tensor) else clean_samples_NF
     fom_np = clean_samples_FOM.cpu().numpy() if isinstance(clean_samples_FOM, torch.Tensor) else clean_samples_FOM
