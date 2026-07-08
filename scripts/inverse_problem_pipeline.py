@@ -233,7 +233,7 @@ def main():
         t_ref = perf_counter() - t1
         print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
         
-        plot_trace(chain_exploration_NF, chain_refined_NF, mu_true_phys, "NF", test_idx[i], results_dir)
+        plot_trace(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
         full_chain_NF = torch.cat([chain_exploration, chain_refined])
 
         # FOM
