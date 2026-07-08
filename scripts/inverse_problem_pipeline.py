@@ -47,7 +47,7 @@ def FOMgenerator(muj, nrep):
                                axis = 0), 
                 device = device)
 
-def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir):
+def plot_trace(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir):
     full_chain = torch.cat([chain_exp, chain_ref])
     split_point = len(chain_exp)
 
@@ -83,8 +83,14 @@ def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx
     plt.savefig(os.path.join(results_dir, f'trace_{model_name}_idx_{test_idx}.png'))
     plt.close(fig1)
 
-    # POSTERIOR DISTRIBUTION
-    fig2, ax_post = plt.subplots(figsize=(7, 5))
+def plot_posterior(clean_samples, mu_true, model_name, test_idx, results_dir, xlim, ylim):
+    if isinstance(clean_samples, torch.Tensor):
+        clean_samples = clean_samples.cpu().numpy()
+
+    fig, ax_post = plt.subplots(figsize=(7, 5))
+    
+    step = 200 if model_name == "NF" else 20
+
     sns.kdeplot(
         x=clean_samples[:, 0],
         y=clean_samples[:, 1],
@@ -94,17 +100,23 @@ def plot_trace_and_posterior(chain_exp, chain_ref, mu_true, model_name, test_idx
         levels=10,
         ax=ax_post
     )
+    
     ax_post.scatter(mu_true[0], mu_true[1], s=300, c='red', marker='X', label='True target', zorder=10)
     ax_post.scatter(clean_samples[::step, 0], clean_samples[::step, 1], s=5, c='black', alpha=0.1, label='Samples')
+    
     ax_post.set_title(f"Posterior Distribution ({model_name})", fontsize=14, fontweight='bold')
     ax_post.set_xlabel("Mass")
     ax_post.set_ylabel("Delta")
+    
+    ax_post.set_xlim(xlim)
+    ax_post.set_ylim(ylim)
+    
     ax_post.legend()
     ax_post.grid(True, alpha=0.3)
     
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, f'posterior_{model_name}_idx_{test_idx}.png'))
-    plt.close(fig2)
+    plt.close(fig)
 
 def main():
 
@@ -152,16 +164,14 @@ def main():
     downloaded_path = gdown.download(id="1M7Dx3tKViTRwUkbzoG1mMcMjUWnRmc8v", quiet=True, output=model_name)
     loaded_rom = PODcnf.load(downloaded_path)
 
-    V = loaded_rom.V
-    V_sensors = V[surface_idx, :].to(device)
-
-    Q1 = lambda c: c @ V_sensors.T # For generative model
-    Q2 = lambda ufom: ufom[:, surface_idx] # For Full Order Modell
+    Q = lambda u: u[:, surface_idx]
 
     test_idx = np.random.randint(0, n_samples-1, n_simulations)
 
-    Nexp = 10000
-    Nref = 30000
+    # Nexp = 10000
+    # Nref = 30000
+    Nexp = 50
+    Nref = 150
 
     for i in range(n_simulations):
         print(f">>> Simulation {i+1}/{n_simulations} - Selected test index:\t{test_idx[i]}\n")
@@ -185,8 +195,8 @@ def main():
 
         t0 = perf_counter()
         chain_exploration, cov_learned = adaptive_metropolis_hastings(
-            generator=loaded_rom.sample_latent_same_mu,
-            Q=Q1,
+            generator=loaded_rom.sample,
+            Q=Q,
             mu_0=mu_0,
             obs=u_obs,
             N=Nexp,
@@ -207,8 +217,8 @@ def main():
         cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
         t1 = perf_counter()
         chain_refined, cov_refined = adaptive_metropolis_hastings(
-            generator=loaded_rom.sample_latent_same_mu,
-            Q=Q1,
+            generator=loaded_rom.sample,
+            Q=Q,
             mu_0=best_guess,
             obs=u_obs,
             N=Nref,
@@ -224,7 +234,6 @@ def main():
         t_ref = perf_counter() - t1
         print(f">>> PODCNF\nExploration time:\t{t_exp}\nRefinement time:\t{t_ref}")
         
-        plot_trace_and_posterior(chain_exploration, chain_refined, mu_true_phys, "NF", test_idx[i], results_dir)
         full_chain_NF = torch.cat([chain_exploration, chain_refined])
 
         # FOM
@@ -234,7 +243,7 @@ def main():
         t0_FOM = perf_counter()
         chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings(
             generator=FOMgenerator,
-            Q=Q2,
+            Q=Q,
             mu_0=mu_0,
             obs=u_obs,
             N=Nexp,
@@ -256,7 +265,7 @@ def main():
         t1_FOM = perf_counter()
         chain_refined_FOM, _ = adaptive_metropolis_hastings(
             generator=FOMgenerator,
-            Q=Q2,
+            Q=Q,
             mu_0=mu_0,
             obs=u_obs,
             N=Nref,
@@ -278,6 +287,22 @@ def main():
         # Results
         clean_samples_NF = chain_refined[2000:]
         clean_samples_FOM = chain_refined_FOM[1000:]
+
+        nf_np = clean_samples_NF.cpu().numpy() if isinstance(clean_samples_NF, torch.Tensor) else clean_samples_NF
+        fom_np = clean_samples_FOM.cpu().numpy() if isinstance(clean_samples_FOM, torch.Tensor) else clean_samples_FOM
+        
+        x_min = min(nf_np[:, 0].min(), fom_np[:, 0].min())
+        x_max = max(nf_np[:, 0].max(), fom_np[:, 0].max())
+        y_min = min(nf_np[:, 1].min(), fom_np[:, 1].min())
+        y_max = max(nf_np[:, 1].max(), fom_np[:, 1].max())
+        
+        x_margin = (x_max - x_min) * 0.1
+        y_margin = (y_max - y_min) * 0.1
+        xlim = (x_min - x_margin, x_max + x_margin)
+        ylim = (y_min - y_margin, y_max + y_margin)
+
+        plot_posterior(clean_samples_NF, mu_true_phys, "NF", test_idx[i], results_dir, xlim, ylim)
+        plot_posterior(clean_samples_FOM, mu_true_phys, "FOM", test_idx[i], results_dir, xlim, ylim)
         
         # Performance PODCNF
         mean_mass_NF = torch.mean(clean_samples_NF[:, 0])
@@ -309,22 +334,6 @@ def main():
             torch.tensor(clean_samples_NF, dtype=torch.float32)
         )
         print(f"Wasserstein Distance (W2): {w2_dist:.4f}")
-        
-        fig3, ax_comp = plt.subplots(figsize=(7, 5))
-        sns.kdeplot(x=clean_samples_NF[:, 0], y=clean_samples_NF[:, 1], cmap="Blues", fill=True, alpha=0.5)
-        sns.kdeplot(x=clean_samples_FOM[:, 0], y=clean_samples_FOM[:, 1], cmap="Oranges", fill=True, alpha=0.5)
-        
-        ax_comp.plot([], [], color='blue', alpha=0.5, label='NF Posterior')
-        ax_comp.plot([], [], color='orange', alpha=0.5, label='FOM Posterior')
-        ax_comp.scatter(mu_true_phys[0], mu_true_phys[1], s=300, c='red', marker='X', label='True target', zorder=10)
-        
-        ax_comp.set_title(f"Posterior Comparison (W2 Dist: {w2_dist:.4f})", fontsize=14, fontweight='bold')
-        ax_comp.set_xlabel("Mass")
-        ax_comp.set_ylabel("Delta")
-        ax_comp.legend()
-        plt.tight_layout()
-        plt.savefig(os.path.join(results_dir, f'posterior_comparison_idx_{test_idx[i]}.png'))
-        plt.close(fig3)
         
         results_dict = {
             'test_idx': int(test_idx[i]),

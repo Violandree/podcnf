@@ -38,11 +38,10 @@ def adaptive_metropolis_hastings(
     def compute_log_likelihood(mu_t):
         with torch.no_grad():
 
-            c_samples = generator(mu_t, nrep)
+            u_samples = generator(mu_t, nrep)
 
-            # Projection on the sensors
-            # [N_gen, 20] @ [20, 62] -> [N_gen, 62]
-            sensor_sample = Q(c_samples)
+            # Select the sensors
+            sensor_sample = Q(u_samples)
 
             diff = sensor_sample - obs.reshape(1, -1)
             dj2 = diff.pow(2).sum(dim=1) # [N_gen]
