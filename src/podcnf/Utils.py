@@ -22,12 +22,9 @@ def Wasser_dist(u_replica_true, u_rec):
     a = np.ones((n_samples_r,)) / n_samples_r
     b = np.ones((n_samples_gen,)) / n_samples_gen
 
-    # Costs matrix
-    # Euclidean distance
-    M = ot.dist(u_replica_true, u_rec, metric='sqeuclidean')
+    M = ot.dist(u_replica_true, u_rec, metric='euclidean')
 
-    # EMD (W_2^2)
-    w2_squared_dist = ot.emd2(a, b, M)
-    w2_dist = np.sqrt(w2_squared_dist)
+    # EMD (W_1)
+    w1_dist = ot.emd2(a, b, M)
 
-    return w2_dist
+    return w1_dist

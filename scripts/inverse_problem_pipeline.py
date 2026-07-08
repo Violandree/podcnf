@@ -52,10 +52,10 @@ def plot_trace(chain_exp, chain_ref, mu_true, model_name, test_idx, results_dir)
 
     # Burn-in e step
     if model_name == "NF":
-        clean_samples = chain_ref[2000:]
+        clean_samples = chain_ref#[2000:] - da togliere
         step = 200
     else:
-        clean_samples = chain_ref[1000:]
+        clean_samples = chain_ref#[1000:] - da togliere
         step = 20
 
     # TRACE PLOT
@@ -130,8 +130,8 @@ def main():
     os.makedirs(results_dir, exist_ok=True)
 
     # Load reduced data
-    tets_data_file = 'test_data.pt'
-    data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=tets_data_file)
+    test_data_file = 'test_data.pt'
+    data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=test_data_file)
     test_data = torch.load(data_download_path, map_location=device, weights_only=True)
 
     mu = test_data['mu_test']
@@ -284,8 +284,8 @@ def main():
         full_chain_FOM = torch.cat([chain_exploration_FOM, chain_refined_FOM])
         
         # Results
-        clean_samples_NF = chain_refined[2000:]
-        clean_samples_FOM = chain_refined_FOM[1000:]
+        clean_samples_NF = chain_refined#[2000:] - da togliere
+        clean_samples_FOM = chain_refined_FOM#[1000:] - da togliere
 
         nf_np = clean_samples_NF.cpu().numpy() if isinstance(clean_samples_NF, torch.Tensor) else clean_samples_NF
         fom_np = clean_samples_FOM.cpu().numpy() if isinstance(clean_samples_FOM, torch.Tensor) else clean_samples_FOM
