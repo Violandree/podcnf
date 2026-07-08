@@ -30,8 +30,6 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-from dlroms import *
-
 def FOMgenerator(muj, nrep):
   if(isinstance(muj, torch.Tensor)):
     mu0 = muj.cpu().numpy()
