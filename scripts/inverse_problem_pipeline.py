@@ -84,7 +84,6 @@ def main():
     model_name = "elasticPODcnf.pt"
     downloaded_path = gdown.download(id="1M7Dx3tKViTRwUkbzoG1mMcMjUWnRmc8v", quiet=True, output=model_name)
     loaded_rom = PODcnf.load(downloaded_path)
-    loaded_rom = loaded_rom.to(device)
 
     surface_idx_tensor = torch.tensor(sur, dtype=torch.long, device=device)
     Q = lambda u: u[:, surface_idx_tensor]
