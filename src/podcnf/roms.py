@@ -129,7 +129,7 @@ class PODcnf(GenerativeROM):
 
         loaded_checkpoint = torch.load(filepath, weights_only=False, map_location=device)
 
-        Vpod = loaded_checkpoint['Vpod'].to(device)
+        Vpod = loaded_checkpoint['Vpod']
         flow_dict = loaded_checkpoint['flow_dict']
         mu_scaler = loaded_checkpoint['mu_scaler']
         c_scaler = loaded_checkpoint['c_scaler']
