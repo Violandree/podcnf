@@ -84,8 +84,10 @@ def main():
     model_name = "elasticPODcnf.pt"
     downloaded_path = gdown.download(id="1M7Dx3tKViTRwUkbzoG1mMcMjUWnRmc8v", quiet=True, output=model_name)
     loaded_rom = PODcnf.load(downloaded_path)
+    loaded_rom = loaded_rom.to(device)
 
-    Q = lambda u: u[:, surface_idx]
+    surface_idx_tensor = torch.tensor(sur, dtype=torch.long, device=device)
+    Q = lambda u: u[:, surface_idx_tensor]
 
     test_idx = np.random.randint(0, n_samples-1, n_simulations)
 
@@ -185,7 +187,7 @@ def main():
         chain_refined_FOM, _ = adaptive_metropolis_hastings(
             generator=FOMgenerator,
             Q=Q,
-            mu_0=mu_0,
+            mu_0=best_guess_FOM,
             obs=u_obs,
             N=Nref,
             bounds=bounds,
