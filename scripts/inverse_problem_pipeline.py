@@ -72,7 +72,7 @@ def main():
     u_surface_sensor = u[:, surface_idx] 
     print(f"Shape of u_surface_sensor: {u_surface_sensor.shape}")
 
-    n_simulations = 2
+    n_simulations = 4
 
     bounds = {
         'm_min': 1.0, 'm_max': 2.0,
