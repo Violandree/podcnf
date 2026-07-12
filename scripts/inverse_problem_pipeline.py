@@ -86,7 +86,23 @@ def main():
     loaded_rom = PODcnf.load(downloaded_path, device)
 
     surface_idx_tensor = torch.tensor(sur, dtype=torch.long, device=device)
-    Q = lambda u: u[:, surface_idx_tensor]
+
+    V_sensors = loaded_rom.V[surface_idx_tensor, :]
+
+    def podcnf_sensor_generator(mu, nrep):
+        c_samples = loaded_rom.sample_latent(mu, nrep)
+        return c_samples @ V_sensors.T
+
+    def fom_sensor_generator(muj, nrep):
+        mu0 = muj.cpu().numpy() if isinstance(muj, torch.Tensor) else muj
+        u_sensors = []
+        for j in range(nrep):
+            full_u = FOMsampler(j, *mu0, option=1)[-2]
+            u_sensors.append(full_u[surface_idx])
+            
+        return torch.tensor(np.stack(u_sensors, axis=0), dtype=torch.float32, device=device)
+
+    Q = lambda u: u
 
     test_idx = np.random.randint(0, n_samples-1, n_simulations)
 

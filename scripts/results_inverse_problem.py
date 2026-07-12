@@ -82,8 +82,18 @@ def plot_posterior(clean_samples, mu_true, model_name, test_idx, results_dir, xl
     plt.savefig(os.path.join(results_dir, f'posterior_{model_name}_idx_{test_idx}.png'))
     plt.close(fig)
 
-links = {29: {'ROM': "1KRpajPjd0x7NC5anoCKyuKAg1jQltJS8",
-              'FOM': "1TBDW6Z22wo3H7ONE16wWr-yZ2na8OB_b"}}
+
+
+links = {
+    165: {
+        'ROM': "",
+        'FOM': ""
+    },
+    000: {
+        'ROM': "",
+        'FOM': ""
+    }
+}
 
 def main():
     test_data_file = 'test_data.pt'
