@@ -131,7 +131,7 @@ def main():
 
         t0 = perf_counter()
         chain_exploration, cov_learned = adaptive_metropolis_hastings(
-            generator=loaded_rom.sample,
+            generator=podcnf_sensor_generator,
             Q=Q,
             mu_0=mu_0,
             obs=u_obs,
@@ -153,7 +153,7 @@ def main():
         cov_for_refinement = cov_learned + torch.eye(2, device=device) * 1e-6
         t1 = perf_counter()
         chain_refined, cov_refined = adaptive_metropolis_hastings(
-            generator=loaded_rom.sample,
+            generator=podcnf_sensor_generator,
             Q=Q,
             mu_0=best_guess,
             obs=u_obs,
@@ -178,7 +178,7 @@ def main():
         
         t0_FOM = perf_counter()
         chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings(
-            generator=FOMgenerator,
+            generator=fom_sensor_generator,
             Q=Q,
             mu_0=mu_0,
             obs=u_obs,
@@ -200,7 +200,7 @@ def main():
         cov_for_refinement_FOM = cov_learned_FOM + torch.eye(2, device=device) * 1e-6
         t1_FOM = perf_counter()
         chain_refined_FOM, _ = adaptive_metropolis_hastings(
-            generator=FOMgenerator,
+            generator=fom_sensor_generator,
             Q=Q,
             mu_0=best_guess_FOM,
             obs=u_obs,
