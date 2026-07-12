@@ -172,6 +172,9 @@ def main():
         
         full_chain_NF = torch.cat([chain_exploration, chain_refined])
 
+        Nexp = 1000
+        Nref = 3000
+
         # FOM
         print("\n>>> Adaptive MH with FOM:")
         print("\n--- EXPLORATION ---")
