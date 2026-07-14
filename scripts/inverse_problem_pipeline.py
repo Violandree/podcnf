@@ -105,7 +105,7 @@ def main():
     Q = lambda u: u
 
     # test_idx = np.random.randint(0, n_samples-1, n_simulations)
-    test_idx = np.array([25, 78, 81, 112, 122, 153, 173, 272])
+    test_idx = np.array([122, 153, 173, 272])
 
     Nexp = 10000
     Nref = 30000
