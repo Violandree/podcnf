@@ -233,31 +233,31 @@ def main():
         #     full_chain_FOM.detach().cpu().numpy()
         # )
 
-    #     results_dict = {
-    #     'test_idx': int(test_idx[i]),
-    #     'true_mass': float(mu_true_phys[0]),
-    #     'true_delta': float(mu_true_phys[1]),
-    #     'initial_guess': [float(ig) for ig in mu_0],
-    #     'NF': {
-    #         'time_exploration': float(t_exp),
-    #         'time_refinement': float(t_ref),
-    #     },
-    #     'FOM': {
-    #         'time_exploration': float(t_exp_FOM),
-    #         'time_refinement': float(t_ref_FOM),
-    #     }
-    # }
+        #     results_dict = {
+        #     'test_idx': int(test_idx[i]),
+        #     'true_mass': float(mu_true_phys[0]),
+        #     'true_delta': float(mu_true_phys[1]),
+        #     'initial_guess': [float(ig) for ig in mu_0],
+        #     'NF': {
+        #         'time_exploration': float(t_exp),
+        #         'time_refinement': float(t_ref),
+        #     },
+        #     'FOM': {
+        #         'time_exploration': float(t_exp_FOM),
+        #         'time_refinement': float(t_ref_FOM),
+        #     }
+        # }
 
-    results_dict = {
-        'test_idx': int(test_idx[i]),
-        'true_mass': float(mu_true_phys[0]),
-        'true_delta': float(mu_true_phys[1]),
-        'initial_guess': [float(ig) for ig in mu_0],
-        'NF': {
-            'time_exploration': float(t_exp),
-            'time_refinement': float(t_ref),
+        results_dict = {
+            'test_idx': int(test_idx[i]),
+            'true_mass': float(mu_true_phys[0]),
+            'true_delta': float(mu_true_phys[1]),
+            'initial_guess': [float(ig) for ig in mu_0],
+            'NF': {
+                'time_exploration': float(t_exp),
+                'time_refinement': float(t_ref),
+            }
         }
-    }
     
     with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
         json.dump(results_dict, f, indent=4)
