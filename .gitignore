@@ -10,6 +10,7 @@ notebooks/*
 
 # Results
 results/
+scripts/inverse_results
 
 # Model Checkpoints and Outputs
 results/
