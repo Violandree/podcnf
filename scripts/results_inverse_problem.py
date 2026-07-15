@@ -57,7 +57,7 @@ def plot_posterior(full_chain, mu_true, model_name, test_idx, results_dir, xlim,
         clean_samples = full_chain[12000:] 
         step = 200
     else:
-        clean_samples = full_chain[1000:] 
+        clean_samples = full_chain[1500:]
         step = 20
 
     sns.kdeplot(
@@ -91,49 +91,47 @@ def plot_posterior(full_chain, mu_true, model_name, test_idx, results_dir, xlim,
 
 links = {
     25: {
-        'ROM': "",
+        'ROM': "1qQb8lwFp_IrtILHTkT4jTrJ5ZELCWLe3",
         'FOM': "1ofloey7emcHBoRV-44jVhIoNpYa3UXz-"
     },
     78: {
-        'ROM': "",
+        'ROM': "18PJc4xcARtBGrkkM6vHqeU7-RnWwBxfC",
         'FOM': "1ehQmOwKH7JLAhzSNW4zyplHVt3sIOQFN"
     },
     81: {
-        'ROM': "",
+        'ROM': "19Qlrj-HYBcoLGevxBz_h8u2nNEAFNn2X",
         'FOM': "1QMuowiGbEPUIB3YNJUR99k44vSAyUxPw"
     },
     112: {
-        'ROM': "",
+        'ROM': "1mpx0uG8p7ZnAVxGfsdrDY-aqZ8xMkh1E",
         'FOM': "1DkF4qG0Kfy286VuuexlL0ESzwDBsIYoy"
     },
     122: {
-        'ROM': "",
+        'ROM': "1ApEyrYqFjD6yNOae-Cg1Ve63IRsGlzM7",
         'FOM': "1nCxnss8oMu8jjjqPsQMYhbXhHWIGHscy"
     },
     153: {
-        'ROM': "",
+        'ROM': "1NMOxrQj-Qny3-6QS2I0peMoY0r1Onban",
         'FOM': "1ovQDV2_b3bdu0qTUgkbUWHm4NuX_1sta"
     },
     173: {
-        'ROM': "",
+        'ROM': "1TiuVn4-CKPrAJ9J2K-DbGxq6CVHrxhla",
         'FOM': "1V5Gr5gZBq3zS0EhQzpaFIM4k-dABIRoM"
     },
     272: {
-        'ROM': "",
+        'ROM': "1TcMZEDjUTA7tE2-1IirsMCoJOzaOCOyc",
         'FOM': "1KHEQAoAD1_bbnOWRWm_-p-y75cSwPjsj"
     }
 
 }
 
-def main():
+def main(test_idx):
     test_data_file = 'test_data.pt'
     data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=test_data_file)
     test_data = torch.load(data_download_path, weights_only=True)
 
     mu = test_data['mu_test']
 
-    # {25, 78, 81, 112, 122, 153, 173, 272}
-    test_idx = 78
     mu_true_phys = mu[test_idx].cpu().numpy()
 
     dir = 'inverse_results/idx_%d' %test_idx
@@ -148,17 +146,14 @@ def main():
     gdown.download(id=links[test_idx]['FOM'], quiet=True, output=FOM_chain_name)
     full_chain_FOM = np.load(FOM_chain_name)
 
-    print(full_chain_FOM.shape)
-    print(full_chain.shape)
-
     # Results
-    # clean_samples_NF = full_chain[12000:]  
-    # clean_samples_FOM = full_chain_FOM[1500:]
+    clean_samples_NF = full_chain[12000:]
+    clean_samples_FOM = full_chain_FOM[1500:]
     
-    x_min = min(full_chain[:, 0].min(), full_chain_FOM[:, 0].min())
-    x_max = max(full_chain[:, 0].max(), full_chain_FOM[:, 0].max())
-    y_min = min(full_chain[:, 1].min(), full_chain_FOM[:, 1].min())
-    y_max = max(full_chain[:, 1].max(), full_chain_FOM[:, 1].max())
+    x_min = min(clean_samples_NF[:, 0].min(), clean_samples_FOM[:, 0].min())
+    x_max = max(clean_samples_NF[:, 0].max(), clean_samples_FOM[:, 0].max())
+    y_min = min(clean_samples_NF[:, 1].min(), clean_samples_FOM[:, 1].min())
+    y_max = max(clean_samples_NF[:, 1].max(), clean_samples_FOM[:, 1].max())
     
     x_margin = (x_max - x_min) * 0.1
     y_margin = (y_max - y_min) * 0.1
@@ -171,9 +166,6 @@ def main():
 
     plot_posterior(full_chain, mu_true_phys, "NF", test_idx, results_dir, xlim, ylim)
     plot_posterior(full_chain_FOM, mu_true_phys, "FOM", test_idx, results_dir, xlim, ylim)
-
-    clean_samples_NF = full_chain[12000:]
-    clean_samples_FOM = full_chain_FOM[1500:]
     
     # Performance PODCNF
     mean_mass_NF = np.mean(clean_samples_NF[:, 0])
@@ -235,4 +227,6 @@ def main():
     print(f"Results for index {test_idx} saved successfully!\n")
 
 if __name__ == "__main__":
-    main()
+    test_idx = np.array([25, 78, 81, 112, 122, 153, 173, 272])
+    for t in test_idx:
+        main(t)
