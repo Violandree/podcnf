@@ -1,5 +1,4 @@
-# Dipendenze principali
-numpy<2.0.0
+numpy
 torch
 matplotlib
 scikit-learn
@@ -13,6 +12,6 @@ gdown
 pot
 dlroms-nicola-r-franco @ git+https://github.com/NicolaRFranco/dlroms.git
 
-# Strumenti di sviluppo (questi andranno installati a parte se ti servono)
+[dev]
 pytest
 black

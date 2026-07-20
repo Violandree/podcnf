@@ -1,9 +1,12 @@
+# [build-system]
+# Dice a programmi come pip o uv quali strumenti usare per trasformare il codice sorgente in un pacchetto installabile.
+
 [build-system]
 requires = [
-    "setuptools>=61.0",
+    "setuptools>=42",
     "wheel"
 ]
-build-backend = "setuptools.build_meta"
+build_backend = "setuptools.build_meta"
 
 [project]
 name = "podcnf"
@@ -14,18 +17,23 @@ authors = [
 description = "Python implementation of pod-cnf"
 requires-python = ">=3.10"
 
+# Contiene nome, versione, descrizione e gli autori. La parte vitale qui è dependencies: 
+# qui si elencano i pacchetti.
+
 dependencies = [
-    "numpy<2.0.0", 
+    "numpy",
     "torch",
     "matplotlib",
     "scikit-learn",
-    "tensorboard",
-    "torchsummary",
     "scipy",
     "seaborn",
     "tqdm",
     "jupyter",
-    "ipykernel"
+    "ipykernel",
+    "pandas",
+    "gdown",
+    "pot",
+    "dlroms-nicola-r-franco @ git+https://github.com/NicolaRFranco/dlroms.git"
 ]
 
 [project.optional-dependencies]
