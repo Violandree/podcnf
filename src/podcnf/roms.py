@@ -48,8 +48,8 @@ class PODcnf(GenerativeROM):
     def __init__(self, pod_matrix, cnf_model, mu_scaler = None, c_scaler = None):
         self.__V = pod_matrix
         self.__cnf = cnf_model
-        self.__mu_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if mu_scaler is None else mu_scaler
-        self.__c_scaler = TorchScaler(0.0, 1.0, pod_matrix.device) if c_scaler is None else c_scaler
+        self.__mu_scaler = TorchScaler(0.0, 1.0) if mu_scaler is None else mu_scaler
+        self.__c_scaler = TorchScaler(0.0, 1.0) if c_scaler is None else c_scaler
 
     @property
     def V(self):
