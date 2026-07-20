@@ -29,3 +29,7 @@ __pycache__/
 # egg-info
 *.egg-info/
 *.egg
+
+# requires
+src/podcnf.egg-info/
+requires.txt
