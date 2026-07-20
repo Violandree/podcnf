@@ -8,8 +8,4 @@
 # print(type(sys)) # sys è un oggetto modulo
 # print(sys.path) # per vedere se il progetto podcnf è presente nel path
 
-try:
-    from podcnf.roms import PODcnf
-    from podcnf.DataManage import LoadData
-except:
-    None
+from podcnf.roms import PODcnf

@@ -104,7 +104,8 @@ def main():
 
     Q = lambda u: u
 
-    test_idx = np.random.randint(0, n_samples-1, n_simulations)
+    # test_idx = np.random.randint(0, n_samples-1, n_simulations)
+    test_idx = np.array([122, 153, 173, 272])
 
     Nexp = 10000
     Nref = 30000
@@ -172,80 +173,91 @@ def main():
         
         full_chain_NF = torch.cat([chain_exploration, chain_refined])
 
-        Nexp = 1000
-        Nref = 3000
+        # Nexp = 1000
+        # Nref = 3000
 
-        # FOM
-        print("\n>>> Adaptive MH with FOM:")
-        print("\n--- EXPLORATION ---")
+        # # FOM
+        # print("\n>>> Adaptive MH with FOM:")
+        # print("\n--- EXPLORATION ---")
         
-        t0_FOM = perf_counter()
-        chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings(
-            generator=fom_sensor_generator,
-            Q=Q,
-            mu_0=mu_0,
-            obs=u_obs,
-            N=Nexp,
-            bounds=bounds,
-            temperature=5.0,
-            C_0=initial_cov_expl,
-            n_0=200,
-            s_d=2.4,
-            nrep=10,
-            h=0.1,
-            verbose=verbose
-        )
-        t_exp_FOM = perf_counter() - t0_FOM
-        best_guess_FOM = chain_exploration_FOM[-1].clone().detach()
-        print(f"Exploration Time: {t_exp_FOM:.2f} s - Best Guess: {best_guess_FOM}")
+        # t0_FOM = perf_counter()
+        # chain_exploration_FOM, cov_learned_FOM = adaptive_metropolis_hastings(
+        #     generator=fom_sensor_generator,
+        #     Q=Q,
+        #     mu_0=mu_0,
+        #     obs=u_obs,
+        #     N=Nexp,
+        #     bounds=bounds,
+        #     temperature=5.0,
+        #     C_0=initial_cov_expl,
+        #     n_0=200,
+        #     s_d=2.4,
+        #     nrep=10,
+        #     h=0.1,
+        #     verbose=verbose
+        # )
+        # t_exp_FOM = perf_counter() - t0_FOM
+        # best_guess_FOM = chain_exploration_FOM[-1].clone().detach()
+        # print(f"Exploration Time: {t_exp_FOM:.2f} s - Best Guess: {best_guess_FOM}")
 
-        print("\n--- REFINEMENT ---")
-        cov_for_refinement_FOM = cov_learned_FOM + torch.eye(2, device=device) * 1e-6
-        t1_FOM = perf_counter()
-        chain_refined_FOM, _ = adaptive_metropolis_hastings(
-            generator=fom_sensor_generator,
-            Q=Q,
-            mu_0=best_guess_FOM,
-            obs=u_obs,
-            N=Nref,
-            bounds=bounds,
-            temperature=1.0,
-            C_0=cov_for_refinement_FOM,
-            n_0=0,
-            s_d=0.35,
-            nrep=25,
-            h=0.03,
-            verbose=verbose
-        )
-        t_ref_FOM = perf_counter() - t1_FOM
-        print(f">>> FOM\nRefinement Time: {t_ref_FOM:.2f} s")
+        # print("\n--- REFINEMENT ---")
+        # cov_for_refinement_FOM = cov_learned_FOM + torch.eye(2, device=device) * 1e-6
+        # t1_FOM = perf_counter()
+        # chain_refined_FOM, _ = adaptive_metropolis_hastings(
+        #     generator=fom_sensor_generator,
+        #     Q=Q,
+        #     mu_0=best_guess_FOM,
+        #     obs=u_obs,
+        #     N=Nref,
+        #     bounds=bounds,
+        #     temperature=1.0,
+        #     C_0=cov_for_refinement_FOM,
+        #     n_0=0,
+        #     s_d=0.35,
+        #     nrep=25,
+        #     h=0.03,
+        #     verbose=verbose
+        # )
+        # t_ref_FOM = perf_counter() - t1_FOM
+        # print(f">>> FOM\nRefinement Time: {t_ref_FOM:.2f} s")
         
-        full_chain_FOM = torch.cat([chain_exploration_FOM, chain_refined_FOM])
+        # full_chain_FOM = torch.cat([chain_exploration_FOM, chain_refined_FOM])
 
         np.save(
             os.path.join(results_dir, f'chain_NF_idx_{test_idx[i]}.npy'),
             full_chain_NF.detach().cpu().numpy()
         )
         
-        np.save(
-            os.path.join(results_dir, f'chain_FOM_idx_{test_idx[i]}.npy'),
-            full_chain_FOM.detach().cpu().numpy()
-        )
+        # np.save(
+        #     os.path.join(results_dir, f'chain_FOM_idx_{test_idx[i]}.npy'),
+        #     full_chain_FOM.detach().cpu().numpy()
+        # )
+
+        #     results_dict = {
+        #     'test_idx': int(test_idx[i]),
+        #     'true_mass': float(mu_true_phys[0]),
+        #     'true_delta': float(mu_true_phys[1]),
+        #     'initial_guess': [float(ig) for ig in mu_0],
+        #     'NF': {
+        #         'time_exploration': float(t_exp),
+        #         'time_refinement': float(t_ref),
+        #     },
+        #     'FOM': {
+        #         'time_exploration': float(t_exp_FOM),
+        #         'time_refinement': float(t_ref_FOM),
+        #     }
+        # }
 
         results_dict = {
-        'test_idx': int(test_idx[i]),
-        'true_mass': float(mu_true_phys[0]),
-        'true_delta': float(mu_true_phys[1]),
-        'initial_guess': [float(ig) for ig in mu_0],
-        'NF': {
-            'time_exploration': float(t_exp),
-            'time_refinement': float(t_ref),
-        },
-        'FOM': {
-            'time_exploration': float(t_exp_FOM),
-            'time_refinement': float(t_ref_FOM),
+            'test_idx': int(test_idx[i]),
+            'true_mass': float(mu_true_phys[0]),
+            'true_delta': float(mu_true_phys[1]),
+            'initial_guess': [float(ig) for ig in mu_0],
+            'NF': {
+                'time_exploration': float(t_exp),
+                'time_refinement': float(t_ref),
+            }
         }
-    }
     
     with open(os.path.join(results_dir, f'results_idx_{test_idx[i]}.json'), 'w') as f:
         json.dump(results_dict, f, indent=4)
