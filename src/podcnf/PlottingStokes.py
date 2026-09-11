@@ -50,21 +50,25 @@ def plot_stokes_solution(indices, data, Vh):
         u_func.vector()[:] = u_tensor
 
         c = fe.plot(u_func, cmap='jet')
-        plt.colorbar(c, ax=ax, shrink = 0.5, label='Concentration (u)')
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        cbar = plt.colorbar(c, ax=ax, shrink=0.5)
+        cbar.set_label('Concentration (u)', fontsize=10)
+        cbar.ax.tick_params(labelsize=8)
 
         title_str = (
-            f"$\\epsilon$ = {eps_val:.5f}, $\\theta$ = {theta_val:.3f} rad\n"
+            f"$\\kappa$ = {eps_val:.5f}, $\\alpha$ = {theta_val:.3f} rad, "
             f"$\\mu$ = [{c1:.2f}, {c2:.2f}, {c3:.2f}]"
         )
-        plt.title(title_str, fontsize=14)
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.title(title_str, fontsize=10)
 
     for j in range(n_plots, len(axes_flat)):
         axes_flat[j].axis('off')
 
     plt.tight_layout()
-    plt.subplots_adjust(hspace=0, wspace=0.3)
+    plt.subplots_adjust(hspace=0.2, wspace=0.3)
     plt.show()
 
 def analyze_stokes_residuals(u, V, mu):
