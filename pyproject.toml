@@ -18,7 +18,7 @@ description = "Python implementation of pod-cnf"
 requires-python = ">=3.10"
 
 # Contiene nome, versione, descrizione e gli autori. La parte vitale qui è dependencies: 
-# qui si elencano i pacchetti.
+# qui si elencano i pacchetti essenziali per il funzionamento della libreria.
 
 dependencies = [
     "numpy",
@@ -28,8 +28,6 @@ dependencies = [
     "scipy",
     "seaborn",
     "tqdm",
-    "jupyter",
-    "ipykernel",
     "pandas",
     "gdown",
     "pot",
@@ -37,7 +35,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "black"]
+# Dipendenze opzionali utilizzate solo per lo sviluppo e l'ambiente notebook
+dev = [
+    "pytest", 
+    "black",
+    "jupyter",
+    "ipykernel"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
