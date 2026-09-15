@@ -5,17 +5,37 @@
     "NF": {
         "mean_mass": 1.1862857341766357,
         "std_mass": 0.1262149065732956,
+<<<<<<< HEAD
         "rel_error_mass": 0.017778757959604263,
         "mean_delta": 0.18378999829292297,
         "std_delta": 0.017833083868026733,
+=======
+        "ci_mass_lower": 1.0111265182495117,
+        "ci_mass_upper": 1.4721508026123047,
+        "rel_error_mass": 0.017778757959604263,
+        "mean_delta": 0.18378999829292297,
+        "std_delta": 0.017833083868026733,
+        "ci_delta_lower": 0.15088310427963733,
+        "ci_delta_upper": 0.21765947341918945,
+>>>>>>> versione-n_simulations-4
         "rel_error_delta": 0.035179365426301956
     },
     "FOM": {
         "mean_mass": 1.0947579145431519,
         "std_mass": 0.0664127841591835,
+<<<<<<< HEAD
         "rel_error_mass": 0.060747914016246796,
         "mean_delta": 0.19522038102149963,
         "std_delta": 0.018540270626544952,
+=======
+        "ci_mass_lower": 1.0016460418701172,
+        "ci_mass_upper": 1.2011390924453735,
+        "rel_error_mass": 0.060747914016246796,
+        "mean_delta": 0.19522038102149963,
+        "std_delta": 0.018540270626544952,
+        "ci_delta_lower": 0.1681990370154381,
+        "ci_delta_upper": 0.23040509223937988,
+>>>>>>> versione-n_simulations-4
         "rel_error_delta": 0.024825364351272583
     },
     "Wasserstein_dist": 0.013092774247192733

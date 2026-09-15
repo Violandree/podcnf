@@ -50,69 +50,26 @@ def plot_stokes_solution(indices, data, Vh):
         u_func.vector()[:] = u_tensor
 
         c = fe.plot(u_func, cmap='jet')
-        plt.colorbar(c, ax=ax, shrink = 0.5, label='Concentration (u)')
+
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+        cbar = plt.colorbar(c, ax=ax, shrink=0.5)
+        cbar.set_label('Concentration (u)', fontsize=10)
+        cbar.ax.tick_params(labelsize=8)
 
         title_str = (
-            f"$\\epsilon$ = {eps_val:.5f}, $\\theta$ = {theta_val:.3f} rad\n"
+            f"$\\kappa$ = {eps_val:.5f}, $\\alpha$ = {theta_val:.3f} rad, "
             f"$\\mu$ = [{c1:.2f}, {c2:.2f}, {c3:.2f}]"
         )
-        plt.title(title_str, fontsize=14)
-        plt.xlabel('x')
-        plt.ylabel('y')
+        plt.title(title_str, fontsize=10)
 
     for j in range(n_plots, len(axes_flat)):
         axes_flat[j].axis('off')
 
     plt.tight_layout()
-    plt.subplots_adjust(hspace=0, wspace=0.3)
+    plt.subplots_adjust(hspace=0.2, wspace=0.3)
     plt.show()
-
-def analyze_stokes_residuals(u, V, mu):
-
-    if isinstance(u, torch.Tensor): u = u.detach().cpu().numpy()
-    if isinstance(V, torch.Tensor): V = V.detach().cpu().numpy()
-    if isinstance(mu, torch.Tensor): mu = mu.detach().cpu().numpy()
-
-    # u ~ c @ V.T
-    c = np.dot(u, V)
-    u_rec = np.dot(c, V.T)
-
-    residuals = u - u_rec
-    u_norms = np.linalg.norm(u, axis=1)
-    error_norms = np.linalg.norm(residuals, axis=1)
-    relative_errors = np.divide(error_norms, u_norms, out=np.zeros_like(error_norms), where=u_norms!=0)
-
-    print(f"Mean Relative Error: {np.mean(relative_errors):.4%}")
-    print(f"Max Relative Error:  {np.max(relative_errors):.4%}")
-
-    params_dict = {
-        'c1': mu[:, 0],
-        'c2': mu[:, 1],
-        'c3': mu[:, 2]
-    }
-
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
-
-    print("-" * 30)
-    print("Correlation on known parameters:")
-
-    for i, (name, values) in enumerate(params_dict.items()):
-        corr, _ = pearsonr(values, relative_errors)
-        print(f"{name}: {corr:.4f}")
-        ax = axes[i]
-        sc = ax.scatter(values, relative_errors, alpha=0.6, c=relative_errors, cmap='viridis')
-        ax.set_title(f'Error vs {name}\nCorr: {corr:.2f}')
-        ax.set_xlabel(name)
-        if i == 0:
-            ax.set_ylabel('L2 Relative Error')
-
-        m, q = np.polyfit(values, relative_errors, 1)
-        ax.plot(values, m*values + q, color='red', linestyle='--', alpha=0.5)
-
-    plt.tight_layout()
-    plt.show()
-    mean_abs_residual_field = np.mean(np.abs(residuals), axis=0)
-    return mean_abs_residual_field
 
 def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
 
@@ -216,11 +173,8 @@ def plot_conditional_same_mu_stokes(n_generations,
                                     u_true, u_rec,
                                     Vh,
                                     mu_values=None):
-    if not DOLFIN_AVAILALBE:
-        print("DOLFIN not available. Skipping plot.")
-        return
 
-    plt.figure(figsize=(9, 6))
+    plt.figure(figsize=(6, 5))
 
     u_func_true = fe.Function(Vh)
     if isinstance(u_true, torch.Tensor):
@@ -228,19 +182,26 @@ def plot_conditional_same_mu_stokes(n_generations,
     else:
         u_func_true.vector()[:] = u_true
 
-    # True solution
     c = fe.plot(u_func_true, cmap='jet')
-    plt.colorbar(c, shrink = 0.8, label='Concentration (u)')
 
-    title_str = "True solution"
+    cbar = plt.colorbar(c, shrink=0.5)
+    cbar.set_label('Concentration (u)', fontsize=10)
+    cbar.ax.tick_params(labelsize=8)
+
+    plt.xticks([])
+    plt.yticks([])
+
+    title_str = ""
     if mu_values is not None:
         if isinstance(mu_values, torch.Tensor):
             mv = mu_values.detach().cpu().numpy().flatten()
         else:
             mv = np.array(mu_values).flatten()
-        title_str += f"\n($c_1$={mv[0]:.2f}, $c_2$={mv[1]:.2f}, $c_3$={mv[2]:.2f})"
+        title_str = f"$\mu$ = [{mv[0]:.2f}, {mv[1]:.2f}, {mv[2]:.2f}]"
 
-    plt.title(title_str)
+    if title_str:
+        plt.title(title_str)
+
     plt.show()
 
     print(f"{n_generations} generated samples:")
@@ -268,18 +229,16 @@ def plot_conditional_same_mu_stokes(n_generations,
         u_func_rec.vector()[:] = sample_data
 
         c = fe.plot(u_func_rec, cmap='jet')
-        plt.colorbar(c, shrink = 0.65, label='Concentration (u)')
+        cbar = plt.colorbar(c, shrink=0.5)
+        cbar.set_label('Concentration (u)', fontsize=10)
+        cbar.ax.tick_params(labelsize=8)
 
-        ax.set_title(f"Sample {i+1}")
         ax.set_xticks([])
         ax.set_yticks([])
 
     for i in range(n_generations, len(axes)):
         axes[i].axis('off')
 
-    mu_str = f"\n($c_1$={mv[0]:.2f}, $c_2$={mv[1]:.2f}, $c_3$={mv[2]:.2f})"
-    fig.suptitle(f"Conditional Generated Samples (Same $\\mu$) \n{mu_str}", fontsize=16)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.show()
 
 def Likelihood_Comparison_Stokes(flow, u, mu, V,

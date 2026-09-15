@@ -87,6 +87,19 @@ def plot_posterior(full_chain, mu_true, model_name, test_idx, results_dir, xlim,
     plt.savefig(os.path.join(results_dir, f'posterior_{model_name}_idx_{test_idx}.png'))
     plt.close(fig)
 
+def plot_credible_interval(ci_FOM, ci_CNF, mean_FOM, mean_CNF, true_parameter, param, test_idx, results_dir):
+    plt.figure(figsize = (3, 4))
+    
+    plt.fill_between([0, 1], ci_FOM[0], ci_FOM[1], color = 'b', alpha = 0.5, label = 'FOM')
+    plt.plot([0,1], [mean_FOM]*2, '--', color = 'b')
+    plt.fill_between([0, 1], ci_CNF[0], ci_CNF[1], color = 'r', alpha = 0.5, label = 'ROM')
+    plt.plot([0,1], [mean_CNF]*2, '--', color = 'r')
+    plt.plot([0,1], [true_parameter]*2, color = 'g')
+    plt.axis([0, 1, min(ci_FOM[0], ci_CNF[0]).item() * 0.95, max(ci_FOM[1], ci_CNF[1]).item() * 1.05])
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, f'ci_{param}_idx_{test_idx}.png'))
 
 
 links = {
@@ -127,8 +140,10 @@ links = {
 
 def main(test_idx):
     test_data_file = 'test_data.pt'
-    data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=test_data_file)
-    test_data = torch.load(data_download_path, weights_only=True)
+
+    if not os.path.exists(test_data_file):
+        data_download_path = gdown.download(id="1eT8re3AeZaQdIen4R6iLkYcpk2Ynj2x9", quiet=True, output=test_data_file)
+    test_data = torch.load(test_data_file, weights_only=True)
 
     mu = test_data['mu_test']
 
@@ -139,11 +154,17 @@ def main(test_idx):
     os.makedirs(results_dir, exist_ok=True)
 
     ROM_chain_name = "inverse_results/chain_NF_idx_%d.npy" %test_idx
+<<<<<<< HEAD
     gdown.download(id=links[test_idx]['ROM'], quiet=True, output=ROM_chain_name)
+=======
+    if not os.path.exists(ROM_chain_name):
+        gdown.download(id=links[test_idx]['ROM'], quiet=True, output=ROM_chain_name)
+>>>>>>> versione-n_simulations-4
     full_chain = np.load(ROM_chain_name)
 
     FOM_chain_name = "inverse_results/chain_FOM_idx_%d.npy" % test_idx
-    gdown.download(id=links[test_idx]['FOM'], quiet=True, output=FOM_chain_name)
+    if not os.path.exists(FOM_chain_name):
+        clegdown.download(id=links[test_idx]['FOM'], quiet=True, output=FOM_chain_name)
     full_chain_FOM = np.load(FOM_chain_name)
 
     # Results
@@ -161,70 +182,90 @@ def main(test_idx):
     ylim = (y_min - y_margin, y_max + y_margin)
 
     # PLOT
-    plot_trace(full_chain, mu_true_phys, "NF", test_idx, results_dir)
-    plot_trace(full_chain_FOM, mu_true_phys, "FOM", test_idx, results_dir)
+    # plot_trace(full_chain, mu_true_phys, "NF", test_idx, results_dir)
+    # plot_trace(full_chain_FOM, mu_true_phys, "FOM", test_idx, results_dir)
 
+<<<<<<< HEAD
     plot_posterior(full_chain, mu_true_phys, "NF", test_idx, results_dir, xlim, ylim)
     plot_posterior(full_chain_FOM, mu_true_phys, "FOM", test_idx, results_dir, xlim, ylim)
+=======
+    # plot_posterior(full_chain, mu_true_phys, "NF", test_idx, results_dir, xlim, ylim)
+    # plot_posterior(full_chain_FOM, mu_true_phys, "FOM", test_idx, results_dir, xlim, ylim)
+>>>>>>> versione-n_simulations-4
     
     # Performance PODCNF
     mean_mass_NF = np.mean(clean_samples_NF[:, 0])
     std_mass_NF = np.std(clean_samples_NF[:, 0])
+    ci_mass_NF = np.percentile(clean_samples_NF[:, 0], [2.5, 97.5])
     err_mass_NF = abs(mean_mass_NF - mu_true_phys[0]) / mu_true_phys[0]
 
     mean_delta_NF = np.mean(clean_samples_NF[:, 1])
     std_delta_NF = np.std(clean_samples_NF[:, 1])
+    ci_delta_NF = np.percentile(clean_samples_NF[:, 1], [2.5, 97.5])
     err_delta_NF = abs(mean_delta_NF - mu_true_phys[1]) / mu_true_phys[1]
 
     # Performance FOM
     mean_mass_FOM = np.mean(clean_samples_FOM[:, 0])
     std_mass_FOM = np.std(clean_samples_FOM[:, 0])
+    ci_mass_FOM = np.percentile(clean_samples_FOM[:, 0], [2.5, 97.5])
     err_mass_FOM = abs(mean_mass_FOM - mu_true_phys[0]) / mu_true_phys[0]
 
     mean_delta_FOM = np.mean(clean_samples_FOM[:, 1])
     std_delta_FOM = np.std(clean_samples_FOM[:, 1])
+    ci_delta_FOM = np.percentile(clean_samples_FOM[:, 1], [2.5, 97.5])
     err_delta_FOM = abs(mean_delta_FOM - mu_true_phys[1]) / mu_true_phys[1]
 
-    print("\n--- ERROR METRICS ---")
-    print(f"PODCNF - Estimated Mass:  {mean_mass_NF:.4f} +/- {std_mass_NF:.4f} | Rel Error: {err_mass_NF:.4%}")
-    print(f"PODCNF - Estimated Delta: {mean_delta_NF:.4f} +/- {std_delta_NF:.4f} | Rel Error: {err_delta_NF:.4%}")
-    print(f"FOM    - Estimated Mass:  {mean_mass_FOM:.4f} +/- {std_mass_FOM:.4f} | Rel Error: {err_mass_FOM:.4%}")
-    print(f"FOM    - Estimated Delta: {mean_delta_FOM:.4f} +/- {std_delta_FOM:.4f} | Rel Error: {err_delta_FOM:.4%}")
+    plot_credible_interval(ci_mass_FOM, ci_mass_NF, mean_mass_FOM, mean_mass_NF, mu_true_phys[0], 'mass', test_idx, results_dir)
+    plot_credible_interval(ci_delta_FOM, ci_delta_NF, mean_delta_FOM, mean_delta_NF, mu_true_phys[1], 'delta', test_idx, results_dir)
 
-    print("\nCalculating Wasserstein distance:")
-    w2_dist = Wasser_dist(
-        torch.tensor(clean_samples_FOM, dtype=torch.float32),
-        torch.tensor(clean_samples_NF, dtype=torch.float32)
-    )
-    print(f"Wasserstein Distance (W2): {w2_dist:.4f}")
+    print("\n--- ERROR METRICS ---")
+    print(f"PODCNF - Estimated Mass:  {mean_mass_NF:.4f} +/- {std_mass_NF:.4f} | 95% CI: [{ci_mass_NF[0]:.4f}, {ci_mass_NF[1]:.4f}] | Rel Error: {err_mass_NF:.4%}")
+    print(f"PODCNF - Estimated Delta: {mean_delta_NF:.4f} +/- {std_delta_NF:.4f} | 95% CI: [{ci_delta_NF[0]:.4f}, {ci_delta_NF[1]:.4f}] | Rel Error: {err_delta_NF:.4%}")
+    print(f"FOM    - Estimated Mass:  {mean_mass_FOM:.4f} +/- {std_mass_FOM:.4f} | 95% CI: [{ci_mass_FOM[0]:.4f}, {ci_mass_FOM[1]:.4f}] | Rel Error: {err_mass_FOM:.4%}")
+    print(f"FOM    - Estimated Delta: {mean_delta_FOM:.4f} +/- {std_delta_FOM:.4f} | 95% CI: [{ci_delta_FOM[0]:.4f}, {ci_delta_FOM[1]:.4f}] | Rel Error: {err_delta_FOM:.4%}")
+
+    # print("\nCalculating Wasserstein distance:")
+    # w2_dist = Wasser_dist(
+    #     torch.tensor(clean_samples_FOM, dtype=torch.float32),
+    #     torch.tensor(clean_samples_NF, dtype=torch.float32)
+    # )
+    # print(f"Wasserstein Distance (W2): {w2_dist:.4f}")
     
-    results_dict = {
-        'test_idx': int(test_idx),
-        'true_mass': float(mu_true_phys[0]),
-        'true_delta': float(mu_true_phys[1]),
-        'NF': {
-            'mean_mass': float(mean_mass_NF),
-            'std_mass': float(std_mass_NF),
-            'rel_error_mass': float(err_mass_NF),
-            'mean_delta': float(mean_delta_NF),
-            'std_delta': float(std_delta_NF),
-            'rel_error_delta': float(err_delta_NF)
-        },
-        'FOM': {
-            'mean_mass': float(mean_mass_FOM),
-            'std_mass': float(std_mass_FOM),
-            'rel_error_mass': float(err_mass_FOM),
-            'mean_delta': float(mean_delta_FOM),
-            'std_delta': float(std_delta_FOM),
-            'rel_error_delta': float(err_delta_FOM)
-        },
-        'Wasserstein_dist': float(w2_dist)
-    }
+    # results_dict = {
+    #     'test_idx': int(test_idx),
+    #     'true_mass': float(mu_true_phys[0]),
+    #     'true_delta': float(mu_true_phys[1]),
+    #     'NF': {
+    #         'mean_mass': float(mean_mass_NF),
+    #         'std_mass': float(std_mass_NF),
+    #         'ci_mass_lower': float(ci_mass_NF[0]),
+    #         'ci_mass_upper': float(ci_mass_NF[1]),
+    #         'rel_error_mass': float(err_mass_NF),
+    #         'mean_delta': float(mean_delta_NF),
+    #         'std_delta': float(std_delta_NF),
+    #         'ci_delta_lower': float(ci_delta_NF[0]),
+    #         'ci_delta_upper': float(ci_delta_NF[1]),
+    #         'rel_error_delta': float(err_delta_NF)
+    #     },
+    #     'FOM': {
+    #         'mean_mass': float(mean_mass_FOM),
+    #         'std_mass': float(std_mass_FOM),
+    #         'ci_mass_lower': float(ci_mass_FOM[0]),
+    #         'ci_mass_upper': float(ci_mass_FOM[1]),
+    #         'rel_error_mass': float(err_mass_FOM),
+    #         'mean_delta': float(mean_delta_FOM),
+    #         'std_delta': float(std_delta_FOM),
+    #         'ci_delta_lower': float(ci_delta_FOM[0]),
+    #         'ci_delta_upper': float(ci_delta_FOM[1]),
+    #         'rel_error_delta': float(err_delta_FOM)
+    #     },
+    #     'Wasserstein_dist': float(w2_dist)
+    # }
     
-    with open(os.path.join(results_dir, f'results_idx_{test_idx}.json'), 'w') as f:
-        json.dump(results_dict, f, indent=4)
+    # with open(os.path.join(results_dir, f'results_idx_{test_idx}.json'), 'w') as f:
+    #     json.dump(results_dict, f, indent=4)
         
-    print(f"Results for index {test_idx} saved successfully!\n")
+    # print(f"Results for index {test_idx} saved successfully!\n")
 
 if __name__ == "__main__":
     test_idx = np.array([25, 78, 81, 112, 122, 153, 173, 272])
