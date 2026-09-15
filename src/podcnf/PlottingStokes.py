@@ -71,10 +71,9 @@ def plot_stokes_solution(indices, data, Vh):
     plt.subplots_adjust(hspace=0.2, wspace=0.3)
     plt.show()
 
-def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
+def analyze_bases_variation_stokes(u, mu=None, n_bases_list=range(1, 41)):
 
     if isinstance(u, torch.Tensor): u = u.detach().cpu().numpy()
-    if isinstance(mu, torch.Tensor): mu = mu.detach().cpu().numpy()
 
     n_samples = u.shape[0]
     ntrain = int(n_samples * 0.75)
@@ -83,7 +82,6 @@ def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
 
     u_train = u[:ntrain]
     u_val = u[ntrain:nval]
-    mu_val = mu[ntrain:nval]
 
     spatial_modes, s, _ = svd(u_train.T, full_matrices=False)
 
@@ -91,8 +89,6 @@ def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
     cum_energy = np.cumsum(s_energy)
 
     mean_errors = []
-    max_errors = []
-    corrs = {'c1': [], 'c2': [], 'c3': []}
 
     for k in n_bases_list:
         V_k = spatial_modes[:, :k]
@@ -104,22 +100,11 @@ def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
         err_norms = np.linalg.norm(residuals, axis=1)
 
         rel_errors = np.divide(err_norms, u_norms, out=np.zeros_like(err_norms), where=u_norms!=0)
-
         mean_errors.append(np.mean(rel_errors))
-        max_errors.append(np.max(rel_errors))
 
-        if mu_val.shape[1] >= 3:
-            corrs['c1'].append(pearsonr(mu_val[:, 0], rel_errors)[0])
-            corrs['c2'].append(pearsonr(mu_val[:, 1], rel_errors)[0])
-            corrs['c3'].append(pearsonr(mu_val[:, 2], rel_errors)[0])
+    fig, ax1 = plt.subplots(figsize=(10, 6))
 
-    fig = plt.figure(figsize=(18, 12))
-
-    gs = gridspec.GridSpec(2, 4, figure=fig)
-
-    ax1 = fig.add_subplot(gs[0, 0:2])
-
-    l1, = ax1.plot(n_bases_list, np.array(mean_errors)*100, 'b-o', label='Mean Relative Error (%)')
+    l1, = ax1.plot(n_bases_list, np.array(mean_errors) * 100, 'b-o', label='Mean Relative Error (%)')
     ax1.set_ylabel('Mean Error (%)', color='b', fontsize=14)
     ax1.tick_params(axis='y', labelcolor='b')
     ax1.set_xlabel('Number of Bases (N)', fontsize=14)
@@ -135,36 +120,6 @@ def analyze_bases_variation_stokes(u, mu, n_bases_list=range(1, 41)):
     lines = [l1, l2]
     labels = [l.get_label() for l in lines]
     ax1.legend(lines, labels, loc='center right')
-
-    ax2 = fig.add_subplot(gs[0, 2:4])
-
-    ax2.plot(n_bases_list, np.array(max_errors)*100, 'r-s', label='Max Relative Error (%)')
-    ax2.set_ylabel('Max Error (%)', fontsize=14)
-    ax2.set_xlabel('Number of Bases (N)', fontsize=14)
-    ax2.grid(True, linestyle='--', alpha=0.5)
-    ax2.set_title('Worst-Case Error vs Number of Bases', fontsize=16)
-    ax2.legend(fontsize=12)
-
-    ax3 = fig.add_subplot(gs[1, 1:3])
-
-    styles = {
-        'c1': {'color': 'purple', 'marker': 'o'},
-        'c2': {'color': 'orange', 'marker': 'x'},
-        'c3': {'color': 'teal', 'marker': 's'}
-    }
-
-    for param, values in corrs.items():
-        if len(values) > 0:
-            style = styles.get(param, {'color': 'black', 'marker': '.'})
-            ax3.plot(n_bases_list, values, label=f'Corr(Err, {param})',
-                     marker=style['marker'], color=style['color'], linewidth=2)
-
-    ax3.set_ylabel('Pearson Correlation', fontsize=14)
-    ax3.set_xlabel('Number of Bases (N)', fontsize=14)
-    ax3.axhline(0, color='black', linewidth=1.5, alpha=0.7)
-    ax3.legend(fontsize=12)
-    ax3.grid(True, linestyle='--', alpha=0.5)
-    ax3.set_title('Error Correlation vs Control Parameters (c1, c2, c3)', fontsize=16)
 
     plt.tight_layout()
     plt.show()
