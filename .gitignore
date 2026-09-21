@@ -1,15 +1,21 @@
 # Python Virtual Environment
 .venv/
 
+# tests
+tests/
+
+# scripts
+scripts/
+
 # Datasets
 data/
+
+# Results
+results/
 
 # No need it notebooks
 notebooks/*
 !notebooks/LibraryExplanation.ipynb
-
-# Results
-results/
 
 # Model Checkpoints and Outputs
 results/

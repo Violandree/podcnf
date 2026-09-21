@@ -17,7 +17,7 @@ except ImportError:
     DOLFIN_AVAILALBE = False
     print("DOLFIN not available.")
 
-from podcnf.NFmodel import NormalizingFlow
+from podcnf.models import NormalizingFlow
 
 def plot_stokes_solution(indices, data, Vh):
     if not DOLFIN_AVAILALBE:

@@ -1,15 +1,19 @@
-# Questo file serve per far capire all'interprete python che il progetto
-# cui siamo dentro non è una semplice cartella ma un pacchetto e che le 
-# sotto cartelle (moduli) devono comunicare tra di loro
+"""
+podcnf: Deep Generative Surrogates for Stochastic PDEs
+"""
 
-# NON SERVE PER VEDERE QUELLO CHE HAI SCRITTO QUA', E' SOLO UNA PROVA
-# print(dir()) # Per vedere variabili di default e quelle istanziate
-# import sys
-# print(type(sys)) # sys è un oggetto modulo
-# print(sys.path) # per vedere se il progetto podcnf è presente nel path
+__version__ = "0.1.0"
 
-try:
-    from podcnf.roms import PODcnf
-    from podcnf.DataManage import LoadData
-except:
-    None
+from . import models
+from . import data
+from . import training
+from . import viz
+from . import utils
+
+__all__ = [
+    "models",
+    "data",
+    "training",
+    "viz",
+    "utils"
+]

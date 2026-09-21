@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from typing import List, Tuple, Optional
 
 from IPython.display import clear_output
-from podcnf.Training import train_one_epoch, validate_one_epoch
+from podcnf.training import train_one_epoch, validate_one_epoch
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -315,4 +315,3 @@ class NormalizingFlow(nn.Module):
         print(best_hyperparams)
 
         return best_hyperparams
-

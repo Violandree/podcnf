@@ -6,8 +6,8 @@ import numpy as np
 from scipy.linalg import svd
 from dlroms.dnns import num2p
 
-from podcnf.NFmodel import NormalizingFlow
-from podcnf.Visualization import svdplot
+from .nf_model import NormalizingFlow
+from podcnf.viz.visualization import svdplot
 
 from dlroms import euclidean
 
