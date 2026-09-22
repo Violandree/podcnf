@@ -107,7 +107,7 @@ def analyze_bases_variation_stokes(u, mu=None, n_bases_list=range(1, 41)):
     l1, = ax1.plot(n_bases_list, np.array(mean_errors) * 100, 'b-o', label='Mean Relative Error (%)')
     ax1.set_ylabel('Mean Error (%)', color='b', fontsize=14)
     ax1.tick_params(axis='y', labelcolor='b')
-    ax1.set_xlabel('Number of Bases (N)', fontsize=14)
+    ax1.set_xlabel('Number of Bases (n)', fontsize=14)
     ax1.grid(True, linestyle='--', alpha=0.5)
     ax1.set_title('Reconstruction Error vs Number of Bases', fontsize=16)
 
