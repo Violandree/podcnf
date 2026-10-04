@@ -74,6 +74,41 @@ def FOMsampler(stochastic_seed, mass, delta, option:int = 0):
         )
         lambda_ = fe.interpolate(linear_expression, V_lam)
 
+    elif option == 2:
+        rng = np.random.RandomState(stochastic_seed)
+        
+        # Discretize the domain [-pi/4, pi/4] into exactly 10 realizations
+        possible_angles = np.linspace(-np.pi/4, np.pi/4, 10)
+        
+        # Define a multi-modal Gaussian (Mixture of Gaussians)
+        # Mode 1: Mean at -pi/8, narrower spread, 40% weight
+        mu1, std1, w1 = -np.pi/8, 0.1, 0.4
+        # Mode 2: Mean at +pi/12, wider spread, 60% weight
+        mu2, std2, w2 = np.pi/12, 0.2, 0.6
+        
+        pdf1 = np.exp(-0.5 * ((possible_angles - mu1) / std1)**2)
+        pdf2 = np.exp(-0.5 * ((possible_angles - mu2) / std2)**2)
+        
+        probs = (w1 * pdf1) + (w2 * pdf2)
+        probs /= np.sum(probs)
+        
+        m = rng.choice(possible_angles, p=probs)
+        material_angle = m
+
+        x_c, y_c = 0.5, 0.5
+        cos_m = np.cos(m)
+        sin_m = np.sin(m)
+
+        l1 = 7.1
+        l2 = 0.1
+
+        linear_expression = lambda x: np.where(
+            (x[1] - y_c) * cos_m - (x[0] - x_c) * sin_m > 0,
+            l1,
+            l2
+        )
+        lambda_ = fe.interpolate(linear_expression, V_lam)
+
     else:
         raise ValueError("No Valid Option!")
 
